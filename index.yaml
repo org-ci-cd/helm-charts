@@ -3,9 +3,9 @@ entries:
   neo4j-cluster-core:
   - apiVersion: v1
     appVersion: 4.4.4
-    created: "2022-03-23T14:29:44.347486828-04:00"
+    created: "2022-03-23T14:40:29.851401968-04:00"
     description: Neo4j is the world's leading graph database
-    digest: d52829d09fa088b1efd35d2303f6e5681381cab48a465a4c395e041c69578819
+    digest: f6632de9edb2f346e06e1d831281435c98f75532efccac6fae784d60e0cf55d9
     home: https://www.neo4j.com
     icon: http://info.neo4j.com/rs/773-GON-065/images/neo4j_logo.png
     keywords:
@@ -22,14 +22,14 @@ entries:
     - https://github.com/neo4j/neo4j
     - https://github.com/neo4j/docker-neo4j
     urls:
-    - https://github.com/org-ci-cd/helm-charts/neo4j-cluster-core-4.4.4.tgz
+    - https://org-ci-cd.github.io/helm-charts/neo4j-cluster-core-4.4.4.tgz
     version: 4.4.4
   neo4j-cluster-headless-service:
   - apiVersion: v1
     appVersion: 4.4.4
-    created: "2022-03-23T14:29:44.347997118-04:00"
+    created: "2022-03-23T14:40:29.85193317-04:00"
     description: Neo4j is the world's leading graph database
-    digest: be7925898ef9b3e287ac504ff348cb53b2b03261318e8a82c288626653be539b
+    digest: 41e6d3f0620eb92699967d0de3b9deedc5bfcb22594a80374122335941dc7127
     home: https://www.neo4j.com
     icon: http://info.neo4j.com/rs/773-GON-065/images/neo4j_logo.png
     keywords:
@@ -46,14 +46,14 @@ entries:
     - https://github.com/neo4j/neo4j
     - https://github.com/neo4j/docker-neo4j
     urls:
-    - https://github.com/org-ci-cd/helm-charts/neo4j-cluster-headless-service-4.4.4.tgz
+    - https://org-ci-cd.github.io/helm-charts/neo4j-cluster-headless-service-4.4.4.tgz
     version: 4.4.4
   neo4j-cluster-loadbalancer:
   - apiVersion: v1
     appVersion: 4.4.4
-    created: "2022-03-23T14:29:44.348501732-04:00"
+    created: "2022-03-23T14:40:29.85241875-04:00"
     description: Neo4j is the world's leading graph database
-    digest: f34c11ca867ae6eb08afc7b9128cbb1dde18437d24dc1ea5f071f341a7d14fa2
+    digest: 9aa6a795fb54f64d847f4d8ffca80d74446db252ea3acef09ce34978dc64d3ea
     home: https://www.neo4j.com
     icon: http://info.neo4j.com/rs/773-GON-065/images/neo4j_logo.png
     keywords:
@@ -70,14 +70,14 @@ entries:
     - https://github.com/neo4j/neo4j
     - https://github.com/neo4j/docker-neo4j
     urls:
-    - https://github.com/org-ci-cd/helm-charts/neo4j-cluster-loadbalancer-4.4.4.tgz
+    - https://org-ci-cd.github.io/helm-charts/neo4j-cluster-loadbalancer-4.4.4.tgz
     version: 4.4.4
   neo4j-cluster-read-replica:
   - apiVersion: v1
     appVersion: 4.4.4
-    created: "2022-03-23T14:29:44.351402359-04:00"
+    created: "2022-03-23T14:40:29.854264893-04:00"
     description: Neo4j is the world's leading graph database
-    digest: f752a9f15e91827b5a12d9e94dc98628d9202ed46c04a6c29c2117be20958275
+    digest: 6ddefd2b2d5fe21ff3ae1b3c39585da6cbecfe5b041c68b2de2641c1d875eaa5
     home: https://www.neo4j.com
     icon: http://info.neo4j.com/rs/773-GON-065/images/neo4j_logo.png
     keywords:
@@ -94,14 +94,14 @@ entries:
     - https://github.com/neo4j/neo4j
     - https://github.com/neo4j/docker-neo4j
     urls:
-    - https://github.com/org-ci-cd/helm-charts/neo4j-cluster-read-replica-4.4.4.tgz
+    - https://org-ci-cd.github.io/helm-charts/neo4j-cluster-read-replica-4.4.4.tgz
     version: 4.4.4
   neo4j-standalone:
   - apiVersion: v1
     appVersion: 4.4.4
-    created: "2022-03-23T14:29:44.35316598-04:00"
+    created: "2022-03-23T14:40:29.856182479-04:00"
     description: Neo4j is the world's leading graph database
-    digest: 03990e70b4770b328468e0498960ff452cdda0da0c5d4e1c80807ae1ef4a42a2
+    digest: 981e364caa61f52a2223333ad3654475567d0cadd1601100228ac12006cc52d8
     home: https://www.neo4j.com
     icon: http://info.neo4j.com/rs/773-GON-065/images/neo4j_logo.png
     keywords:
@@ -118,6 +118,6 @@ entries:
     - https://github.com/neo4j/neo4j
     - https://github.com/neo4j/docker-neo4j
     urls:
-    - https://github.com/org-ci-cd/helm-charts/neo4j-standalone-4.4.4.tgz
+    - https://org-ci-cd.github.io/helm-charts/neo4j-standalone-4.4.4.tgz
     version: 4.4.4
-generated: "2022-03-23T14:29:44.345508656-04:00"
+generated: "2022-03-23T14:40:29.84905933-04:00"
