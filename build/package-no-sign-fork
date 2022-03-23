@@ -37,7 +37,7 @@ helm package ./neo4j-cluster-headless-service
 # Create index.yaml
 #
 #helm repo index ./temp/packages/ --url https://github.com/org-ci-cd/helm-charts
-helm repo index . --url https://github.com/org-ci-cd/helm-charts
+helm repo index . --url https://org-ci-cd.github.io/helm-charts
 
 # Upload new packages to s3
 #
@@ -48,3 +48,4 @@ helm repo index . --url https://github.com/org-ci-cd/helm-charts
 
 
 git add *.tgz
+git add index.yaml
