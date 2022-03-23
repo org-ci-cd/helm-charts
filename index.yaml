@@ -1,0 +1,123 @@
+apiVersion: v1
+entries:
+  neo4j-cluster-core:
+  - apiVersion: v1
+    appVersion: 4.4.4
+    created: "2022-03-23T14:40:29.851401968-04:00"
+    description: Neo4j is the world's leading graph database
+    digest: f6632de9edb2f346e06e1d831281435c98f75532efccac6fae784d60e0cf55d9
+    home: https://www.neo4j.com
+    icon: http://info.neo4j.com/rs/773-GON-065/images/neo4j_logo.png
+    keywords:
+    - graph
+    - database
+    - cypher
+    maintainers:
+    - email: bledi.feshti@neotechnology.com
+      name: bfeshti
+    - email: harshit.singhvi@neotechnology.com
+      name: harshitsinghvi22
+    name: neo4j-cluster-core
+    sources:
+    - https://github.com/neo4j/neo4j
+    - https://github.com/neo4j/docker-neo4j
+    urls:
+    - https://org-ci-cd.github.io/helm-charts/neo4j-cluster-core-4.4.4.tgz
+    version: 4.4.4
+  neo4j-cluster-headless-service:
+  - apiVersion: v1
+    appVersion: 4.4.4
+    created: "2022-03-23T14:40:29.85193317-04:00"
+    description: Neo4j is the world's leading graph database
+    digest: 41e6d3f0620eb92699967d0de3b9deedc5bfcb22594a80374122335941dc7127
+    home: https://www.neo4j.com
+    icon: http://info.neo4j.com/rs/773-GON-065/images/neo4j_logo.png
+    keywords:
+    - graph
+    - database
+    - cypher
+    maintainers:
+    - email: bledi.feshti@neotechnology.com
+      name: bfeshti
+    - email: harshit.singhvi@neotechnology.com
+      name: harshitsinghvi22
+    name: neo4j-cluster-headless-service
+    sources:
+    - https://github.com/neo4j/neo4j
+    - https://github.com/neo4j/docker-neo4j
+    urls:
+    - https://org-ci-cd.github.io/helm-charts/neo4j-cluster-headless-service-4.4.4.tgz
+    version: 4.4.4
+  neo4j-cluster-loadbalancer:
+  - apiVersion: v1
+    appVersion: 4.4.4
+    created: "2022-03-23T14:40:29.85241875-04:00"
+    description: Neo4j is the world's leading graph database
+    digest: 9aa6a795fb54f64d847f4d8ffca80d74446db252ea3acef09ce34978dc64d3ea
+    home: https://www.neo4j.com
+    icon: http://info.neo4j.com/rs/773-GON-065/images/neo4j_logo.png
+    keywords:
+    - graph
+    - database
+    - cypher
+    maintainers:
+    - email: bledi.feshti@neotechnology.com
+      name: bfeshti
+    - email: harshit.singhvi@neotechnology.com
+      name: harshitsinghvi22
+    name: neo4j-cluster-loadbalancer
+    sources:
+    - https://github.com/neo4j/neo4j
+    - https://github.com/neo4j/docker-neo4j
+    urls:
+    - https://org-ci-cd.github.io/helm-charts/neo4j-cluster-loadbalancer-4.4.4.tgz
+    version: 4.4.4
+  neo4j-cluster-read-replica:
+  - apiVersion: v1
+    appVersion: 4.4.4
+    created: "2022-03-23T14:40:29.854264893-04:00"
+    description: Neo4j is the world's leading graph database
+    digest: 6ddefd2b2d5fe21ff3ae1b3c39585da6cbecfe5b041c68b2de2641c1d875eaa5
+    home: https://www.neo4j.com
+    icon: http://info.neo4j.com/rs/773-GON-065/images/neo4j_logo.png
+    keywords:
+    - graph
+    - database
+    - cypher
+    maintainers:
+    - email: bledi.feshti@neotechnology.com
+      name: bfeshti
+    - email: harshit.singhvi@neotechnology.com
+      name: harshitsinghvi22
+    name: neo4j-cluster-read-replica
+    sources:
+    - https://github.com/neo4j/neo4j
+    - https://github.com/neo4j/docker-neo4j
+    urls:
+    - https://org-ci-cd.github.io/helm-charts/neo4j-cluster-read-replica-4.4.4.tgz
+    version: 4.4.4
+  neo4j-standalone:
+  - apiVersion: v1
+    appVersion: 4.4.4
+    created: "2022-03-23T14:40:29.856182479-04:00"
+    description: Neo4j is the world's leading graph database
+    digest: 981e364caa61f52a2223333ad3654475567d0cadd1601100228ac12006cc52d8
+    home: https://www.neo4j.com
+    icon: http://info.neo4j.com/rs/773-GON-065/images/neo4j_logo.png
+    keywords:
+    - graph
+    - database
+    - cypher
+    maintainers:
+    - email: bledi.feshti@neotechnology.com
+      name: bfeshti
+    - email: harshit.singhvi@neotechnology.com
+      name: harshitsinghvi22
+    name: neo4j-standalone
+    sources:
+    - https://github.com/neo4j/neo4j
+    - https://github.com/neo4j/docker-neo4j
+    urls:
+    - https://org-ci-cd.github.io/helm-charts/neo4j-standalone-4.4.4.tgz
+    version: 4.4.4
+generated: "2022-03-23T14:40:29.84905933-04:00"
