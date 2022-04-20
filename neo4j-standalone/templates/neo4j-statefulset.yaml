@@ -89,6 +89,24 @@ spec:
             - "bash"
             - "-c"
             - "while true; do echo 'Neo4j is not running. Pod is in offline maintenance mode. Remove neo4j.offlineMaintenanceModeEnabled setting and run `helm upgrade ...` to resume normal operation.'; sleep 60; done"
+          {{- else}}
+          command:
+            - "bash"
+            - "-c"
+            - |
+                # As they are no way to configure Neo4j to send these logs into stdout,
+                # we hack our way by transforming them into named pipes (FIFO) to stdout.
+                echo "Creating FIFO logs redirection"
+                mkdir -p /data/logs
+                rm -f /data/logs/query.log /data/logs/security.log /data/logs/debug.log
+                mkfifo /data/logs/query.log /data/logs/security.log /data/logs/debug.log
+                chown -R neo4j:neo4j /data/logs
+                cat < /var/lib/neo4j/data/logs/query.log &
+                cat < /var/lib/neo4j/data/logs/security.log &
+                cat < /var/lib/neo4j/data/logs/debug.log &
+                
+                echo "Starting Neo4j CORE $core_idx on $HOST"
+                exec /docker-entrypoint.sh "neo4j"
           {{- end }}
           envFrom:
             - configMapRef:
