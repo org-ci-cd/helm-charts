@@ -89,6 +89,29 @@ spec:
             - "bash"
             - "-c"
             - "while true; do echo 'Neo4j is not running. Pod is in offline maintenance mode. Remove neo4j.offlineMaintenanceModeEnabled setting and run `helm upgrade ...` to resume normal operation.'; sleep 60; done"
+#          {{- else }}
+#          command:
+#            - "bash"
+#            - "-c"
+#            - |
+#              echo "Is there anything in the /data/databases folder ?"
+#              ls /data/databases/
+#
+#              # As they are no way to configure Neo4j to send these logs into stdout,
+#              # we hack our way by transforming them into named pipes (FIFO) to stdout.
+#              echo "Creating FIFO logs redirection"
+#
+#              LOGS_PATH=/var/lib/neo4j/logs
+#              mkdir -p "$LOGS_PATH"
+#              rm -f $LOGS_PATH/query.log $LOGS_PATH/security.log $LOGS_PATH/debug.log
+#              mkfifo $LOGS_PATH/query.log $LOGS_PATH/security.log $LOGS_PATH/debug.log
+#              chown -R neo4j:neo4j $LOGS_PATH
+#              cat < $LOGS_PATH/query.log &
+#              cat < $LOGS_PATH/security.log &
+#              cat < $LOGS_PATH/debug.log &
+#
+#              echo "Starting Neo4j core"
+#              exec /docker-entrypoint.sh "neo4j"
           {{- end }}
           envFrom:
             - configMapRef:
@@ -175,6 +198,9 @@ spec:
         {{- end }}
         {{- end }}
       volumes:
+#        {{- if .Values.additionalVolumes }}
+#        {{ toYaml .Values.additionalVolumes | indent 8 }}
+#        {{- end }}
         {{- /* neo4j.conf settings. Using a projected volume allows keys defined later in the list of configMaps to override keys defined earlier in the list of configmaps. */}}
         - name: neo4j-conf
           projected:
