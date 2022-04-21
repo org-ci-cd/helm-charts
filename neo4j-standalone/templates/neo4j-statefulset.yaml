@@ -183,20 +183,6 @@ spec:
             failureThreshold: {{ .Values.startupProbe.failureThreshold }}
             periodSeconds: {{ .Values.startupProbe.periodSeconds }}
           {{- end }}
-        {{- with .Values.podSpec.containers }}
-        # Extra "sidecar" containers
-        {{- range $i, $extraContainer := . }}
-        {{- if not $offlineMaintenanceEnabled | or $extraContainer.enabledInOfflineMaintenanceMode }}
-        - {{ omit $extraContainer "enabledInOfflineMaintenanceMode" | toYaml | indent 8 | trimAll " " }}
-          {{- if not ( hasKey $extraContainer "image") }}
-          image: "{{ $neo4jImage }}"
-          {{- end }}
-          {{- if not ( hasKey $extraContainer "volumeMounts") }}
-          volumeMounts: {{ include "neo4j.volumeMounts" ( omit $.Values.volumes "logs" "metrics" ) | nindent 10 }}
-          {{- end }}
-        {{- end }}
-        {{- end }}
-        {{- end }}
       volumes:
         {{- if .Values.additionalVolumes }}
         {{ toYaml .Values.additionalVolumes | indent 8}}
