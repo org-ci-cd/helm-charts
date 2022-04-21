@@ -198,9 +198,6 @@ spec:
         {{- end }}
         {{- end }}
       volumes:
-        {{- if .Values.additionalVolumes }}
-        {{ toYaml .Values.additionalVolumes | indent 8}}
-        {{- end }}
         {{- /* neo4j.conf settings. Using a projected volume allows keys defined later in the list of configMaps to override keys defined earlier in the list of configmaps. */}}
         - name: neo4j-conf
           projected:
