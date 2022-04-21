@@ -89,7 +89,7 @@ spec:
             - "bash"
             - "-c"
             - "while true; do echo 'Neo4j is not running. Pod is in offline maintenance mode. Remove neo4j.offlineMaintenanceModeEnabled setting and run `helm upgrade ...` to resume normal operation.'; sleep 60; done"
-          {{- else}}
+          {{- else }}
           command:
             - "bash"
             - "-c"
