@@ -211,9 +211,9 @@ spec:
                   name: "{{ .Release.Name }}-k8s-config"
         {{- with include "neo4j.ssl.volumesFromSecrets" .Values.ssl }}{{ nindent 8 .}}{{ end -}}
         {{- with include "neo4j.volumes" . }}{{ nindent 8 . }}{{ end -}}
-        #{{- if .Values.additionalVolumes }}
-        #{{ toYaml .Values.additionalVolumes | indent 8 }}
-        #{{- end }}
+        {{- if .Values.additionalVolumes }}
+        {{ toYaml .Values.additionalVolumes | indent 8 }}
+        {{- end }}
   {{- $volumeClaimTemplates := include "neo4j.volumeClaimTemplates" . -}}
   {{- if $volumeClaimTemplates }}
   volumeClaimTemplates: {{ $volumeClaimTemplates | nindent 4 }}
