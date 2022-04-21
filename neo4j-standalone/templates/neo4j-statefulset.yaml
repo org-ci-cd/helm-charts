@@ -183,10 +183,24 @@ spec:
             failureThreshold: {{ .Values.startupProbe.failureThreshold }}
             periodSeconds: {{ .Values.startupProbe.periodSeconds }}
           {{- end }}
-      volumes:
-        {{- if .Values.additionalVolumes }}
-        {{ toYaml .Values.additionalVolumes | indent 8}}
+        {{- with .Values.podSpec.containers }}
+        # Extra "sidecar" containers
+        {{- range $i, $extraContainer := . }}
+        {{- if not $offlineMaintenanceEnabled | or $extraContainer.enabledInOfflineMaintenanceMode }}
+        - {{ omit $extraContainer "enabledInOfflineMaintenanceMode" | toYaml | indent 8 | trimAll " " }}
+          {{- if not ( hasKey $extraContainer "image") }}
+          image: "{{ $neo4jImage }}"
+          {{- end }}
+          {{- if not ( hasKey $extraContainer "volumeMounts") }}
+          volumeMounts: {{ include "neo4j.volumeMounts" ( omit $.Values.volumes "logs" "metrics" ) | nindent 10 }}
+          {{- end }}
         {{- end }}
+        {{- end }}
+        {{- end }}
+      volumes:
+        #{{- if .Values.additionalVolumes }}
+        #{{ toYaml .Values.additionalVolumes | indent 8}}
+        #{{- end }}
         {{- /* neo4j.conf settings. Using a projected volume allows keys defined later in the list of configMaps to override keys defined earlier in the list of configmaps. */}}
         - name: neo4j-conf
           projected:
