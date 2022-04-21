@@ -3,9 +3,9 @@ entries:
   neo4j-cluster-core:
   - apiVersion: v1
     appVersion: 4.4.5
-    created: "2022-04-21T01:12:41.143334881-04:00"
+    created: "2022-04-21T01:14:23.674959515-04:00"
     description: Neo4j is the world's leading graph database
-    digest: bc84ca37f95cb01c078662f11d3af4db4e9debffa170a169d9bb7d586d2ace68
+    digest: b828d1852f186592a55825a4bfac0ece6f6959c7c90a13a4e9b81daa6266cd42
     home: https://www.neo4j.com
     icon: http://info.neo4j.com/rs/773-GON-065/images/neo4j_logo.png
     keywords:
@@ -26,7 +26,7 @@ entries:
     version: 4.4.5
   - apiVersion: v1
     appVersion: 4.4.4
-    created: "2022-04-21T01:12:41.141161486-04:00"
+    created: "2022-04-21T01:14:23.672528634-04:00"
     description: Neo4j is the world's leading graph database
     digest: f6632de9edb2f346e06e1d831281435c98f75532efccac6fae784d60e0cf55d9
     home: https://www.neo4j.com
@@ -50,9 +50,9 @@ entries:
   neo4j-cluster-headless-service:
   - apiVersion: v1
     appVersion: '-'
-    created: "2022-04-21T01:12:41.144792835-04:00"
+    created: "2022-04-21T01:14:23.676568715-04:00"
     description: Neo4j is the world's leading graph database
-    digest: 4d538616d0be9544a64ec48ee70f7b097cc3bf77e326667b1ace0e17ff1f9414
+    digest: 7128df71bf65b26415fdf75e39f5514e8ff6e3df421e3b370728a4c1e3c9f931
     home: https://www.neo4j.com
     icon: http://info.neo4j.com/rs/773-GON-065/images/neo4j_logo.png
     keywords:
@@ -73,7 +73,7 @@ entries:
     version: 4.4.5
   - apiVersion: v1
     appVersion: 4.4.4
-    created: "2022-04-21T01:12:41.144048363-04:00"
+    created: "2022-04-21T01:14:23.675770594-04:00"
     description: Neo4j is the world's leading graph database
     digest: 41e6d3f0620eb92699967d0de3b9deedc5bfcb22594a80374122335941dc7127
     home: https://www.neo4j.com
@@ -97,9 +97,9 @@ entries:
   neo4j-cluster-loadbalancer:
   - apiVersion: v1
     appVersion: '-'
-    created: "2022-04-21T01:12:41.146091519-04:00"
+    created: "2022-04-21T01:14:23.678081838-04:00"
     description: Neo4j is the world's leading graph database
-    digest: 4366cc588f91e68b10420f88076e2c60f960337455bfc448825d7b75f80d7507
+    digest: 16ac3db3ffd8f4ebf8d1553afe23ef1123cc23fba427ba3354392b95014af9b2
     home: https://www.neo4j.com
     icon: http://info.neo4j.com/rs/773-GON-065/images/neo4j_logo.png
     keywords:
@@ -120,7 +120,7 @@ entries:
     version: 4.4.5
   - apiVersion: v1
     appVersion: 4.4.4
-    created: "2022-04-21T01:12:41.145496459-04:00"
+    created: "2022-04-21T01:14:23.677336289-04:00"
     description: Neo4j is the world's leading graph database
     digest: 9aa6a795fb54f64d847f4d8ffca80d74446db252ea3acef09ce34978dc64d3ea
     home: https://www.neo4j.com
@@ -144,9 +144,9 @@ entries:
   neo4j-cluster-read-replica:
   - apiVersion: v1
     appVersion: 4.4.5
-    created: "2022-04-21T01:12:41.15082888-04:00"
+    created: "2022-04-21T01:14:23.683593522-04:00"
     description: Neo4j is the world's leading graph database
-    digest: 06f083215efb93fa30eda0ed51492f0b0113dbab7c352100b6aecae8efdb5b7e
+    digest: 75ebbacae59eafdf2029f19d74fa4a82ebea33a51146a18db8f0ebfad35eb3b5
     home: https://www.neo4j.com
     icon: http://info.neo4j.com/rs/773-GON-065/images/neo4j_logo.png
     keywords:
@@ -167,7 +167,7 @@ entries:
     version: 4.4.5
   - apiVersion: v1
     appVersion: 4.4.4
-    created: "2022-04-21T01:12:41.148003347-04:00"
+    created: "2022-04-21T01:14:23.680522967-04:00"
     description: Neo4j is the world's leading graph database
     digest: 6ddefd2b2d5fe21ff3ae1b3c39585da6cbecfe5b041c68b2de2641c1d875eaa5
     home: https://www.neo4j.com
@@ -191,9 +191,9 @@ entries:
   neo4j-standalone:
   - apiVersion: v1
     appVersion: 4.4.5
-    created: "2022-04-21T01:12:41.154654881-04:00"
+    created: "2022-04-21T01:14:23.688724555-04:00"
     description: Neo4j is the world's leading graph database
-    digest: eab498bcbe5e563c28673e94044f9da36647f98b0824baf91f678aee99190bad
+    digest: 2a6f4409536cd6ab636daf01108496b534cb19d7bc956c8f9af42e17304569dd
     home: https://www.neo4j.com
     icon: http://info.neo4j.com/rs/773-GON-065/images/neo4j_logo.png
     keywords:
@@ -214,7 +214,7 @@ entries:
     version: 4.4.5
   - apiVersion: v1
     appVersion: 4.4.4
-    created: "2022-04-21T01:12:41.152760371-04:00"
+    created: "2022-04-21T01:14:23.686369721-04:00"
     description: Neo4j is the world's leading graph database
     digest: 981e364caa61f52a2223333ad3654475567d0cadd1601100228ac12006cc52d8
     home: https://www.neo4j.com
@@ -235,4 +235,4 @@ entries:
     urls:
     - https://org-ci-cd.github.io/helm-charts/neo4j-standalone-4.4.4.tgz
     version: 4.4.4
-generated: "2022-04-21T01:12:41.138695918-04:00"
+generated: "2022-04-21T01:14:23.670028076-04:00"
