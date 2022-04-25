@@ -106,7 +106,7 @@ spec:
               mkdir -p "$LOGS_PATH"
               rm -f $LOGS_PATH/query.log $LOGS_PATH/security.log $LOGS_PATH/debug.log
               mkfifo $LOGS_PATH/query.log $LOGS_PATH/security.log $LOGS_PATH/debug.log
-              chown -R neo4j:neo4j $LOGS_PATH
+              #chown -R neo4j:neo4j $LOGS_PATH
               cat < $LOGS_PATH/query.log &
               cat < $LOGS_PATH/security.log &
               cat < $LOGS_PATH/debug.log &
