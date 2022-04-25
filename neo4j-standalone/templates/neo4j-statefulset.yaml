@@ -95,8 +95,8 @@ spec:
             - "bash"
             - "-c"
             - |
-              echo "Is there anything in the /data/databases folder ?"
-              ls /data/databases/
+              echo "Is there anything in the /var/lib/neo4j/data/databases/ folder ?"
+              ls /var/lib/neo4j/data/databases/
 
               # As they are no way to configure Neo4j to send these logs into stdout,
               # we hack our way by transforming them into named pipes (FIFO) to stdout.
