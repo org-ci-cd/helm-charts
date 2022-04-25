@@ -20,10 +20,12 @@
 
   {{- $secretBelongsToSomeoneElse := false }}
   {{- if $secretExists }}
+  {{- cat "!! secret exist !!" | fail }}
   {{- $secretBelongsToSomeoneElse = index $secret.metadata.annotations "meta.helm.sh/release-name" | eq .Release.Name | not }}
   {{- end }}
 
   {{- if $secretBelongsToSomeoneElse -}}
+  {{- cat "!! secret belongs to someone else !!" | fail }}
 
   {{- if eq (len .Values.neo4j.password) 0 -}}
 
@@ -44,6 +46,8 @@
   {{- end -}}
 
   {{- else -}}
+  { { - cat "!! secret does not belongs to someone else !!" | fail } }
+
 
   {{- $password := include "neo4j.password" . | printf "neo4j/%v" | b64enc -}}
 apiVersion: v1
