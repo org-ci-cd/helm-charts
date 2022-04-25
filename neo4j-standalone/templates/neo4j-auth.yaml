@@ -25,7 +25,6 @@
   {{- end }}
 
   {{- if $secretBelongsToSomeoneElse -}}
-    {{ fail "!! secret belongs to someone else !!" }}
 
   {{- if eq (len .Values.neo4j.password) 0 -}}
 
@@ -46,8 +45,6 @@
   {{- end -}}
 
   {{- else -}}
-    {{ fail "!! secret does not belongs to someone else !!" }}
-
 
   {{- $password := include "neo4j.password" . | printf "neo4j/%v" | b64enc -}}
 apiVersion: v1
