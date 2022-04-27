@@ -94,7 +94,7 @@ data:
 
   # Other
   dbms.config.strict_validation: "true"
-  dbms.logs.user.stdout_enabled: "false"
+  dbms.logs.user.stdout_enabled: "true"
   unsupported.dbms.ssl.system.ignore_dot_files: "true"
 
   {{- if $clusterEnabled }}
