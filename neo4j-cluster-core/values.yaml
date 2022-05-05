@@ -39,10 +39,6 @@ neo4j:
 ## into the running container
 additionalVolumes: []
 
-# Custom integration
-# Allow to add volumeMount on pod main container
-#additionalVolumeMounts: []
-
 # Volumes for Neo4j
 volumes:
   data:
