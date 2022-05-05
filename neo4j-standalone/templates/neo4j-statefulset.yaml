@@ -158,9 +158,9 @@ spec:
           volumeMounts:
             - mountPath: "/config/neo4j.conf"
               name: neo4j-conf
-            {{ - if .Values.additionalVolumeMounts }}
-{{ toYaml .Values.additionalVolumeMounts | indent 12 }}
-            {{ - end }}
+#            {{ - if .Values.additionalVolumeMounts }}
+#{{ toYaml .Values.additionalVolumeMounts | indent 12 }}
+#            {{ - end }}
             {{- include "neo4j.volumeMounts" .Values.volumes | indent 12 }}
             {{- include "neo4j.ssl.volumeMountsFromSecrets" .Values.ssl | indent 12 }}
             {{- if $offlineMaintenanceEnabled  }}

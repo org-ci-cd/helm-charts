@@ -41,7 +41,7 @@ additionalVolumes: []
 
 # Custom integration
 # Allow to add volumeMount on pod main container
-additionalVolumeMounts: []
+#additionalVolumeMounts: []
 
 # Volumes for Neo4j
 volumes:
