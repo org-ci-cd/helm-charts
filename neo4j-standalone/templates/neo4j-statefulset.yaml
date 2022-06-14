@@ -1,14 +1,14 @@
 {{- $isEnterprise := required "neo4j.edition must be specified" .Values.neo4j.edition | regexMatch "(?i)enterprise" -}}
-  {{- $clusterEnabled := or ( index .Values.config "dbms.mode" | default "" | regexMatch "(?i)core|replica" ) ( index .Values.config "dbms.clustering.enable" | default "" | regexMatch "(?i)true|yes" ) }}
-  {{- $authDisabled := index .Values.config "dbms.security.auth_enabled" | default "" | regexMatch "(?i)no|false" -}}
-  {{- $offlineMaintenanceEnabled :=  .Values.neo4j.offlineMaintenanceModeEnabled }}
-  {{- $neo4jImage := include "neo4j.image" . }}
+{{- $clusterEnabled := or ( index .Values.config "dbms.mode" | default "" | regexMatch "(?i)core|replica" ) ( index .Values.config "dbms.clustering.enable" | default "" | regexMatch "(?i)true|yes" ) }}
+{{- $authDisabled := index .Values.config "dbms.security.auth_enabled" | default "" | regexMatch "(?i)no|false" -}}
+{{- $offlineMaintenanceEnabled :=  .Values.neo4j.offlineMaintenanceModeEnabled }}
+{{- $neo4jImage := include "neo4j.image" . }}
 
-  {{- template "neo4j.checkNodeSelectorLabels" . -}}
-  {{- template "podSpec.checkLoadBalancerParam" . -}}
-  {{- template "neo4j.checkLicenseAgreement" . -}}
-  {{- template "neo4j.volumes.validation" . -}}
-  {{- template "neo4j.checkResources" . -}}
+{{- template "neo4j.checkNodeSelectorLabels" . -}}
+{{- template "podSpec.checkLoadBalancerParam" . -}}
+{{- template "neo4j.checkLicenseAgreement" . -}}
+{{- template "neo4j.volumes.validation" . -}}
+{{- template "neo4j.checkResources" . -}}
 
 apiVersion: apps/v1
 kind: StatefulSet
@@ -58,7 +58,6 @@ spec:
       {{- end }}
       {{- if $.Values.podSpec.serviceAccountName | or $clusterEnabled }}
       serviceAccountName: "{{ if kindIs "string" $.Values.podSpec.serviceAccountName | and $.Values.podSpec.serviceAccountName }}{{ $.Values.podSpec.serviceAccountName }}{{ else }}{{ .Release.Name }}{{ end }}"
-      automountServiceAccountToken: true
       {{- end }}
       securityContext: {{ toYaml .Values.securityContext | nindent 8 }}
       terminationGracePeriodSeconds: {{ if $offlineMaintenanceEnabled  }}0{{ else }}{{ .Values.podSpec.terminationGracePeriodSeconds }}{{ end }}
@@ -70,12 +69,12 @@ spec:
         {{- range $i, $initContainer := . }}
         {{- if not $offlineMaintenanceEnabled | or $initContainer.enabledInOfflineMaintenanceMode }}
         - {{ omit $initContainer "enabledInOfflineMaintenanceMode" | toYaml | indent 10 | trimAll " " }}
-        {{- if not ( hasKey $initContainer "image") }}
-        image: "{{ $neo4jImage }}"
-        {{- end }}
-        {{- if not ( hasKey $initContainer "volumeMounts") }}
-        volumeMounts: {{ include "neo4j.volumeMounts" ( omit $.Values.volumes "logs" "metrics" ) | nindent 12 }}
-        {{- end }}
+          {{- if not ( hasKey $initContainer "image") }}
+          image: "{{ $neo4jImage }}"
+          {{- end }}
+          {{- if not ( hasKey $initContainer "volumeMounts") }}
+          volumeMounts: {{ include "neo4j.volumeMounts" ( omit $.Values.volumes "logs" "metrics" ) | nindent 12 }}
+          {{- end }}
         {{- end }}
         {{- end }}
       {{- end }}
@@ -148,16 +147,17 @@ spec:
           {{- with .Values.neo4j.resources }}
           resources:
             {{- if hasKey . "requests" | or (hasKey . "limits") }}
-              {{- omit . "cpu" "memory" | toYaml | nindent 12 }}
-              {{- else }}
-              requests: {{ . | toYaml | nindent 14 }}
-              limits: {{ . | toYaml | nindent 14 }}
-              {{- end }}
+            {{- omit . "cpu" "memory" | toYaml | nindent 12 }}
+            {{- else }}
+            requests: {{ . | toYaml | nindent 14 }}
+            limits: {{ . | toYaml | nindent 14 }}
+            {{- end }}
           {{- end }}
           securityContext: {{ omit .Values.securityContext "fsGroupChangePolicy" "fsGroup" | toYaml  | nindent 14 }}
           volumeMounts:
             - mountPath: "/config/neo4j.conf"
               name: neo4j-conf
+            {{- include "neo4j.apoc.volumeMount" .Values.apoc_config | indent 12 }}
             {{- include "neo4j.volumeMounts" .Values.volumes | indent 12 }}
             {{- include "neo4j.ssl.volumeMountsFromSecrets" .Values.ssl | indent 12 }}
             {{- if $offlineMaintenanceEnabled  }}
@@ -190,10 +190,10 @@ spec:
         {{- if not $offlineMaintenanceEnabled | or $extraContainer.enabledInOfflineMaintenanceMode }}
         - {{ omit $extraContainer "enabledInOfflineMaintenanceMode" | toYaml | indent 10 | trimAll " " }}
           {{- if not ( hasKey $extraContainer "image") }}
-            image: "{{ $neo4jImage }}"
+          image: "{{ $neo4jImage }}"
           {{- end }}
           {{- if not ( hasKey $extraContainer "volumeMounts") }}
-            volumeMounts: {{ include "neo4j.volumeMounts" ( omit $.Values.volumes "logs" "metrics" ) | nindent 12 }}
+          volumeMounts: {{ include "neo4j.volumeMounts" ( omit $.Values.volumes "logs" "metrics" ) | nindent 12 }}
           {{- end }}
         {{- end }}
         {{- end }}
@@ -210,6 +210,7 @@ spec:
                   name: "{{ .Release.Name }}-user-config"
               - configMap:
                   name: "{{ .Release.Name }}-k8s-config"
+        {{- include "neo4j.apoc.volume" . | nindent 8 }}
         {{- with include "neo4j.ssl.volumesFromSecrets" .Values.ssl }}{{ nindent 8 .}}{{ end -}}
         {{- with include "neo4j.volumes" . }}{{ nindent 8 . }}{{ end -}}
         {{- if .Values.additionalVolumes }}
