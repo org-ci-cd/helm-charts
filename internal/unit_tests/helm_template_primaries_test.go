@@ -541,6 +541,141 @@ func TestDefaultLabels(t *testing.T) {
 	}))
 }
 
+//TestNeo4jPodAnnotations checks if Neo4j Pod has the annotations or not
+func TestNeo4jPodAnnotations(t *testing.T) {
+	t.Parallel()
+
+	forEachPrimaryChart(t, andEachSupportedEdition(func(t *testing.T, chart model.Neo4jHelmChart, edition string) {
+
+		manifest, err := model.HelmTemplate(t, chart, useDataModeAndAcceptLicense, resources.PodSpecAnnotations.HelmArgs()...)
+		if !assert.NoError(t, err) {
+			return
+		}
+
+		statefulSet := manifest.OfTypeWithName(&appsv1.StatefulSet{}, model.DefaultHelmTemplateReleaseName.String())
+		if !assert.NotNil(t, statefulSet, fmt.Sprintf("no statefulset found with name %s", model.DefaultHelmTemplateReleaseName)) {
+			return
+		}
+		podAnnotations := statefulSet.(*appsv1.StatefulSet).Spec.Template.Annotations
+		if !assert.NotNil(t, podAnnotations, "no pod annotations found") {
+			return
+		}
+
+		if !assert.Contains(t, podAnnotations, "demoKey", "missing podAnnotation demoKey") {
+			return
+		}
+
+		if !assert.Equal(t, podAnnotations["demoKey"], "alpha", "invalid podAnnotation value for key=demoKey") {
+			return
+		}
+
+	}))
+}
+
+//TestNeo4jStatefulSetAnnotations checks if Neo4j StatefulSet has the annotations or not
+func TestNeo4jStatefulSetAnnotations(t *testing.T) {
+	t.Parallel()
+
+	forEachPrimaryChart(t, andEachSupportedEdition(func(t *testing.T, chart model.Neo4jHelmChart, edition string) {
+
+		manifest, err := model.HelmTemplate(t, chart, useDataModeAndAcceptLicense, resources.StatefulSetAnnotations.HelmArgs()...)
+		if !assert.NoError(t, err) {
+			return
+		}
+
+		statefulSet := manifest.OfTypeWithName(&appsv1.StatefulSet{}, model.DefaultHelmTemplateReleaseName.String())
+		if !assert.NotNil(t, statefulSet, fmt.Sprintf("no statefulset found with name %s", model.DefaultHelmTemplateReleaseName)) {
+			return
+		}
+		statefulSetAnnotations := statefulSet.(*appsv1.StatefulSet).ObjectMeta.Annotations
+		if !assert.NotNil(t, statefulSetAnnotations, "no statefulset annotations found") {
+			return
+		}
+
+		if !assert.Contains(t, statefulSetAnnotations, "demoKey", "missing statefulSet annotation demoKey") {
+			return
+		}
+
+		if !assert.Equal(t, statefulSetAnnotations["demoKey"], "alpha", "invalid statefulSet annotation value for key=demoKey") {
+			return
+		}
+
+	}))
+}
+
+//TestNeo4jPodPriorityClassName checks for Neo4j PriorityClassName
+//error should be thrown since we are not creating priorityClass in the cluster in advance
+func TestNeo4jPodPriorityClassName(t *testing.T) {
+	t.Parallel()
+
+	forEachPrimaryChart(t, andEachSupportedEdition(func(t *testing.T, chart model.Neo4jHelmChart, edition string) {
+
+		_, err := model.HelmTemplate(t, chart, useDataModeAndAcceptLicense, resources.PriorityClassName.HelmArgs()...)
+		if !assert.Error(t, err, "error should be thrown for priorityClass") {
+			return
+		}
+
+		if assert.Contains(t, err.Error(), "PriorityClass demo is missing in the cluster", fmt.Sprintf("priorityClass error message missing \n err := %s", err.Error())) {
+			return
+		}
+
+	}))
+}
+
+//TestNeo4jPodTolerations checks for tolerations in the statefulset
+func TestNeo4jPodTolerations(t *testing.T) {
+	t.Parallel()
+
+	forEachPrimaryChart(t, andEachSupportedEdition(func(t *testing.T, chart model.Neo4jHelmChart, edition string) {
+
+		manifest, err := model.HelmTemplate(t, chart, useDataModeAndAcceptLicense, resources.Tolerations.HelmArgs()...)
+		if !assert.NoError(t, err) {
+			return
+		}
+		neo4jStatefulSet := manifest.First(&appsv1.StatefulSet{}).(*appsv1.StatefulSet)
+		podTolerations := neo4jStatefulSet.Spec.Template.Spec.Tolerations
+		if !assert.Len(t, podTolerations, 2, "more than two tolerations found") {
+			return
+		}
+		var invalidTolerationFound bool
+		for _, podToleration := range podTolerations {
+			if podToleration.Key != "key1" && podToleration.Key != "key2" {
+				invalidTolerationFound = true
+				break
+			}
+		}
+
+		if !assert.NotEqual(t, invalidTolerationFound, true, "invalid toleration found") {
+			return
+		}
+
+	}))
+}
+
+//TestNeo4jPodNodeAffinity checks for nodeAffinity setting in statefulset
+func TestNeo4jPodNodeAffinity(t *testing.T) {
+	t.Parallel()
+
+	forEachPrimaryChart(t, andEachSupportedEdition(func(t *testing.T, chart model.Neo4jHelmChart, edition string) {
+
+		manifest, err := model.HelmTemplate(t, chart, useDataModeAndAcceptLicense, resources.NodeAffinity.HelmArgs()...)
+		if !assert.NoError(t, err) {
+			return
+		}
+		neo4jStatefulSet := manifest.First(&appsv1.StatefulSet{}).(*appsv1.StatefulSet)
+		nodeAffinity := neo4jStatefulSet.Spec.Template.Spec.Affinity.NodeAffinity
+		if !assert.NotNil(t, nodeAffinity, "nil nodeAffinity found") {
+			return
+		}
+		if !assert.NotNil(t, nodeAffinity.RequiredDuringSchedulingIgnoredDuringExecution) {
+			return
+		}
+		if !assert.NotEqual(t, len(nodeAffinity.PreferredDuringSchedulingIgnoredDuringExecution), 0) {
+			return
+		}
+	}))
+}
+
 func TestExtraLabels(t *testing.T) {
 	t.Parallel()
 
@@ -751,6 +886,55 @@ func TestInvalidNodeSelectorLabels(t *testing.T) {
 			t.Logf("Invalid nodeselector error message")
 			return
 		}
+	}))
+}
+
+//TestAdditionalVolumesAndMounts checks if the additionalVolumes and additionalVolumeMounts are present or not
+func TestAdditionalVolumesAndMounts(t *testing.T) {
+	t.Parallel()
+
+	forEachPrimaryChart(t, andEachSupportedEdition(func(t *testing.T, chart model.Neo4jHelmChart, edition string) {
+		manifest, err := model.HelmTemplate(t, chart, useDataModeAndAcceptLicense, resources.AdditionalVolumesAndMounts.HelmArgs()...)
+		if !assert.NoError(t, err) {
+			return
+		}
+		neo4jStatefulSet := manifest.First(&appsv1.StatefulSet{}).(*appsv1.StatefulSet)
+		if !assert.NotNil(t, neo4jStatefulSet, "missing statefulSet object") {
+			return
+		}
+		podVolumes := neo4jStatefulSet.Spec.Template.Spec.Volumes
+		if !assert.Len(t, podVolumes, 2, fmt.Sprintf("more than two volumes present")) {
+			return
+		}
+		var volumePresent bool
+		for _, podVolumes := range podVolumes {
+			if podVolumes.Name == "neo4j1-conf" {
+				volumePresent = true
+				break
+			}
+		}
+		if !assert.True(t, volumePresent, "neo4j1-conf volume not found") {
+			return
+		}
+
+		containers := neo4jStatefulSet.Spec.Template.Spec.Containers
+		if !assert.Len(t, containers, 1, "more than one container found") {
+			return
+		}
+		volumeMounts := containers[0].VolumeMounts
+		var volumeMountPresent bool
+		for _, volumeMount := range volumeMounts {
+			if volumeMount.Name == "neo4j1-conf" {
+				if volumeMount.MountPath == "/config/neo4j1.conf" {
+					volumeMountPresent = true
+					break
+				}
+			}
+		}
+		if !assert.True(t, volumeMountPresent, "neo4j1-conf volumeMount not found") {
+			return
+		}
+
 	}))
 }
 

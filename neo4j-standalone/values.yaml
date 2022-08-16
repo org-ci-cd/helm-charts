@@ -32,11 +32,6 @@ neo4j:
   #add labels if required
   labels:
 
-# Custom integration
-## specify additional volumes to mount in the core container, this can be used
-## to specify additional storage of material or to inject files from ConfigMaps
-## into the running container
-additionalVolumes: []
 
 # Volumes for Neo4j
 volumes:
@@ -132,6 +127,16 @@ volumes:
     mode: "share" # share an existing volume (e.g. the data volume)
     share:
       name: "data"
+
+#add additional volumes and their respective mounts
+#additionalVolumes:
+#  - name: neo4j1-conf
+#    emptyDir: {}
+#
+#additionalVolumeMounts:
+#  - mountPath: "/config/neo4j1.conf"
+#    name: neo4j1-conf
+
 
 #nodeSelector labels
 #please ensure the respective labels are present on one of the cluster nodes or else helm charts will throw an error
@@ -301,17 +306,62 @@ image:
 #      email: ""
 #      name: ""
 
+statefulset:
+  metadata:
+    #Annotations for Neo4j StatefulSet
+    annotations:
+#      imageregistry: "https://hub.docker.com/"
+#      demo: alpha
 
 # additional environment variables for the Neo4j Container
 env: {}
 
 # Other K8s configuration to apply to the Neo4j pod
 podSpec:
+
+  #Annotations for Neo4j pod
+  annotations:
+#   imageregistry: "https://hub.docker.com/"
+#   demo: alpha
+
+  nodeAffinity:
+#    requiredDuringSchedulingIgnoredDuringExecution:
+#      nodeSelectorTerms:
+#        - matchExpressions:
+#            - key: topology.kubernetes.io/zone
+#              operator: In
+#              values:
+#                - antarctica-east1
+#                - antarctica-west1
+#    preferredDuringSchedulingIgnoredDuringExecution:
+#      - weight: 1
+#        preference:
+#          matchExpressions:
+#            - key: another-node-label-key
+#              operator: In
+#              values:
+#                - another-node-label-value
+
   # Anti Affinity
   # If set to true then an anti-affinity rule is applied to prevent database pods with the same `neo4j.name` running on a single Kubernetes node.
   # If set to false then no anti-affinity rules are applied
   # If set to an object then that object is used for the Neo4j podAntiAffinity
   podAntiAffinity: true
+
+  #Add tolerations to the Neo4j pod
+  tolerations:
+#    - key: "key1"
+#      operator: "Equal"
+#      value: "value1"
+#      effect: "NoSchedule"
+#    - key: "key2"
+#      operator: "Equal"
+#      value: "value2"
+#      effect: "NoSchedule"
+
+  #Priority indicates the importance of a Pod relative to other Pods.
+  # More Information : https://kubernetes.io/docs/concepts/scheduling-eviction/pod-priority-preemption/
+  priorityClassName: ""
 
   #This indicates that the neo4j instance be included to the loadbalancer. Can be set to exclude to not add the stateful set to loadbalancer
   loadbalancer: "include"

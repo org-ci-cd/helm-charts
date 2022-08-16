@@ -305,3 +305,42 @@ memory value cannot be less than 2Gb or 2Gi
         {{ fail (printf .errMsg) }}
     {{- end -}}
 {{- end -}}
+
+{{/* Checks if the provided priorityClassName already exists in the cluster or not*/}}
+{{- define "neo4j.priorityClassName" -}}
+    {{- if not (empty $.Values.podSpec.priorityClassName) -}}
+        {{- $priorityClassName := (lookup "scheduling.k8s.io/v1" "PriorityClass" .Release.Namespace $.Values.podSpec.priorityClassName) -}}
+            {{- if empty $priorityClassName -}}
+                {{- fail (printf "PriorityClass %s is missing in the cluster" $.Values.podSpec.priorityClassName) -}}
+            {{- else -}}
+priorityClassName: "{{ .Values.podSpec.priorityClassName }}"
+            {{- end -}}
+    {{- end -}}
+{{- end -}}
+
+{{- define "neo4j.tolerations" -}}
+{{/* Add tolerations only if .Values.podSpec.tolerations contains entries */}}
+    {{- if . -}}
+tolerations:
+{{ toYaml . }}
+    {{- end -}}
+{{- end -}}
+
+{{- define "neo4j.affinity" -}}
+    {{- if or (.Values.podSpec.nodeAffinity) (.Values.podSpec.podAntiAffinity) }}
+affinity:
+    {{- if .Values.podSpec.podAntiAffinity }}
+    podAntiAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        - labelSelector:
+            matchLabels:
+              app: "{{ template "neo4j.appName" . }}"
+              helm.neo4j.com/pod_category: "neo4j-instance"
+          topologyKey: kubernetes.io/hostname
+    {{- end }}
+    {{- if .Values.podSpec.nodeAffinity }}
+    nodeAffinity:
+{{ toYaml .Values.podSpec.nodeAffinity | indent 6 }}
+    {{- end }}
+    {{- end }}
+{{- end -}}
