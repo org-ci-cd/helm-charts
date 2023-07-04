@@ -80,12 +80,11 @@ func clusterTests(loadBalancerName model.ReleaseName) ([]SubTest, error) {
 			t.Parallel()
 			assert.NoError(t, checkPriorityClassName(t, loadBalancerName), "priorityClassName should match")
 		}},
-		{name: "Check Cluster Password failure", test: func(t *testing.T) {
-			t.Parallel()
-			assert.NoError(t, checkClusterCorePasswordFailure(t), "Cluster core installation should not succeed with incorrect password")
-		}},
 		{name: "Check K8s", test: func(t *testing.T) {
 			assert.NoError(t, checkK8s(t, loadBalancerName), "Neo4j Config check should succeed")
+		}},
+		{name: "Check Ldap Password", test: func(t *testing.T) {
+			assert.NoError(t, checkLdapPassword(t, loadBalancerName), "LdapPassword should be set")
 		}},
 		{name: "Create Node", test: func(t *testing.T) {
 			assert.NoError(t, createNode(t, loadBalancerName), "Create Node should succeed")
@@ -295,7 +294,6 @@ func checkClusterCorePasswordFailure(t *testing.T) error {
 	clusterReleaseName := model.NewReleaseName("cluster-" + TestRunIdentifier)
 	core := clusterCore{model.NewCoreReleaseName(clusterReleaseName, 4), nil}
 	releaseName := core.Name()
-	diskName := releaseName.DiskName()
 	// we are not using the customized run() func here since we need to assert the error received on stdout
 	//(present in out variable and not in err)
 	out, err := exec.Command(
@@ -305,7 +303,6 @@ func checkClusterCorePasswordFailure(t *testing.T) error {
 			releaseName,
 			model.ClusterCoreHelmChart,
 			model.Neo4jEdition,
-			&diskName,
 			"--set", "neo4j.password=my-password")...).CombinedOutput()
 	if !assert.Error(t, err) {
 		return fmt.Errorf("helm install should fail without the default password")

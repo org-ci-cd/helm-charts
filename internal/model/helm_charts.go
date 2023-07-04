@@ -17,24 +17,26 @@ var HeadlessServiceHelmChart = newHelmChart("neo4j-cluster-headless-service")
 
 var StandaloneHelmChart = newNeo4jHelmChart("neo4j-standalone", []string{"community", "enterprise"})
 
+var BackupHelmChart = newHelmChart("neo4j-admin")
+
 var ClusterCoreHelmChart = newNeo4jHelmChart("neo4j-cluster-core", []string{"enterprise"})
 
 var ClusterReadReplicaHelmChart = newNeo4jHelmChart("neo4j-cluster-read-replica", []string{"enterprise"})
 
-var PrimaryHelmCharts = []Neo4jHelmChart{StandaloneHelmChart, ClusterCoreHelmChart}
+var PrimaryHelmCharts = []Neo4jHelmChartBuilder{StandaloneHelmChart, ClusterCoreHelmChart}
 
 type helmChart struct {
 	path     string
 	editions []string
 }
 
-type HelmChart interface {
+type HelmChartBuilder interface {
 	getPath() string
 	Name() string
 }
 
-type Neo4jHelmChart interface {
-	HelmChart
+type Neo4jHelmChartBuilder interface {
+	HelmChartBuilder
 	GetEditions() []string
 	SupportsEdition(edition string) bool
 }
@@ -79,7 +81,7 @@ func chartExistsAt(path string) (bool, error) {
 	}
 }
 
-func newHelmChart(helmChartName string) HelmChart {
+func newHelmChart(helmChartName string) HelmChartBuilder {
 	filepath := path.Join(path.Join(modelDir, "../.."), helmChartName)
 	if exists, err := chartExistsAt(filepath); err != nil || !exists {
 		panic(err)
@@ -87,7 +89,7 @@ func newHelmChart(helmChartName string) HelmChart {
 	return &helmChart{filepath, nil}
 }
 
-func newNeo4jHelmChart(helmChartName string, editions []string) Neo4jHelmChart {
+func newNeo4jHelmChart(helmChartName string, editions []string) Neo4jHelmChartBuilder {
 	filepath := path.Join(path.Join(modelDir, "../.."), helmChartName)
 	if exists, err := chartExistsAt(filepath); err != nil || !exists {
 		panic(err)

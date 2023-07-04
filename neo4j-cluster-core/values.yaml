@@ -1,6 +1,14 @@
 # Default values for Neo4j.
 # This is a YAML-formatted file.
 
+## @param nameOverride String to partially override common.names.fullname
+nameOverride: ""
+## @param fullnameOverride String to fully override common.names.fullname
+fullnameOverride: ""
+# disableLookups will disable all the lookups done in the helm charts
+# You can enable this when executing helm commands with --dry-run command
+disableLookups: false
+
 neo4j:
   # A common name for all helm deployments that are part of the same Neo4j Cluster
   # To deploy multiple Neo4j clusters in the same Kubernetes namespace each Neo4j cluster should have a different name.
@@ -8,6 +16,8 @@ neo4j:
 
   # If password is not set or empty a random password will be generated during installation
   password: ""
+  # Existing secret to use for initial database password
+  passwordFromSecret: ""
 
   # Neo4j Clustering requires Enterprise Edition
   edition: "enterprise"
@@ -36,6 +46,10 @@ neo4j:
 # Volumes for Neo4j
 volumes:
   data:
+
+    #Set it to true when you do not want to use the subPathExpr
+    disableSubPathExpr: false
+
     # REQUIRED: specify a volume mode to use for data
     # Valid values are share|selector|defaultStorageClass|volume|volumeClaimTemplate|dynamic
     # To get up-and-running quickly, for development or testing, use "defaultStorageClass" for a dynamically provisioned volume of the default storage class.
@@ -92,6 +106,8 @@ volumes:
   # n.b. backups will be written to /backups on the volume
   # any of the volume modes shown above for data can be used for backups
   backups:
+    #Set it to true when you do not want to use the subPathExpr
+    disableSubPathExpr: false
     mode: "share" # share an existing volume (e.g. the data volume)
     share:
       name: "data"
@@ -100,6 +116,8 @@ volumes:
   # n.b. logs will be written to /logs/$(POD_NAME) on the volume
   # any of the volume modes shown above for data can be used for logs
   logs:
+    #Set it to true when you do not want to use the subPathExpr
+    disableSubPathExpr: false
     mode: "share" # share an existing volume (e.g. the data volume)
     share:
       name: "data"
@@ -108,6 +126,8 @@ volumes:
   # n.b. metrics will be written to /metrics/$(POD_NAME) on the volume
   # any of the volume modes shown above for data can be used for metrics
   metrics:
+    #Set it to true when you do not want to use the subPathExpr
+    disableSubPathExpr: false
     mode: "share" # share an existing volume (e.g. the data volume)
     share:
       name: "data"
@@ -116,6 +136,8 @@ volumes:
   # n.b. import will be mounted to /import on the underlying volume
   # any of the volume modes shown above for data can be used for import
   import:
+    #Set it to true when you do not want to use the subPathExpr
+    disableSubPathExpr: false
     mode: "share" # share an existing volume (e.g. the data volume)
     share:
       name: "data"
@@ -124,6 +146,8 @@ volumes:
   # n.b. licenses will be mounted to /licenses on the underlying volume
   # any of the volume modes shown above for data can be used for licenses
   licenses:
+    #Set it to true when you do not want to use the subPathExpr
+    disableSubPathExpr: false
     mode: "share" # share an existing volume (e.g. the data volume)
     share:
       name: "data"
@@ -137,13 +161,19 @@ volumes:
 #  - mountPath: "/config/neo4j1.conf"
 #    name: neo4j1-conf
 
+# ldapPasswordFromSecret defines the secret which holds the password for ldap system account
+# Secret key name must be LDAP_PASS
+# This secret is accessible by Neo4j at the path defined in ldapPasswordMountPath
+ldapPasswordFromSecret: ""
+
+# The above secret gets mounted to the path mentioned here
+ldapPasswordMountPath: ""
 
 #nodeSelector labels
 #please ensure the respective labels are present on one of the cluster nodes or else helm charts will throw an error
-nodeSelector:
+nodeSelector: {}
 #  label1: value1
 #  label2: value2
-
 
 # Services for Neo4j
 services:
@@ -223,13 +253,19 @@ config:
 #  apoc.trigger.enabled: "true"
 #  apoc.jdbc.apoctest.url: "jdbc:foo:bar"
 
-# securityContext defines privilege and access control settings for a Pod or Container. Making sure that we dont run Neo4j as root user.
+# securityContext defines privilege and access control settings for a Pod. Making sure that we dont run Neo4j as root user.
 securityContext:
   runAsNonRoot: true
   runAsUser: 7474
   runAsGroup: 7474
   fsGroup: 7474
   fsGroupChangePolicy: "Always"
+
+# containerSecurityContext defines privilege and access control settings for a Container. Making sure that we dont run Neo4j as root user.
+containerSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 7474
+  runAsGroup: 7474
 
 # Readiness probes are set to know when a container is ready to be used.
 # Because Neo4j uses Java these values are large to distinguish between long Garbage Collection pauses (which don't require a restart) and an actual failure.
@@ -280,7 +316,17 @@ ssl:
       sources: [ ]
     revokedCerts:
       sources: [ ]
-
+  cluster:
+    privateKey:
+      secretName:
+      subPath:
+    publicCertificate:
+      secretName:
+      subPath:
+    trustedCerts:
+      sources: [ ]
+    revokedCerts:
+      sources: [ ]
 # Kubernetes cluster domain suffix
 clusterDomain: "cluster.local"
 
@@ -311,7 +357,6 @@ statefulset:
     annotations:
 #      imageregistry: "https://hub.docker.com/"
 #      demo: alpha
-
 
 # additional environment variables for the Neo4j Container
 env: {}

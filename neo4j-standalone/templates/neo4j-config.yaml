@@ -5,7 +5,7 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: "{{ .Release.Name }}-k8s-config"
+  name: "{{ include "neo4j.fullname" . }}-k8s-config"
   namespace: "{{ .Release.Namespace }}"
   labels:
     app: "{{ template "neo4j.appName" $ }}"
@@ -23,7 +23,7 @@ data:
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: "{{ .Release.Name }}-user-config"
+  name: "{{ include "neo4j.fullname" . }}-user-config"
   namespace: "{{ .Release.Namespace }}"
   labels:
     app: "{{ template "neo4j.appName" $ }}"
@@ -35,6 +35,11 @@ data:
     {{- fail "dbms.jvm.additional properties cannot be set in values.configImport. Set additional JVM arguments in values.jvm.additionalJvmArguments." }}
   {{- end }}
   {{- include "neo4j.configYaml" . | nindent 2 }}
+  {{- end }}
+
+  {{- $exists := include "neo4j.ldapPasswordFromSecretExistsOrNot" . }}
+  {{- if eq $exists "true" }}
+  dbms.security.ldap.authorization.system_password: "$(bash -c 'cat {{ .Values.ldapPasswordMountPath }}/LDAP_PASS')"
   {{- end }}
 
   {{- /* then explicit config - throw an error if it contains jvm additional */}}
@@ -64,7 +69,7 @@ data:
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: "{{ .Release.Name }}-default-config"
+  name: "{{ include "neo4j.fullname" . }}-default-config"
   namespace: "{{ .Release.Namespace }}"
   labels:
     app: "{{ template "neo4j.appName" $ }}"
@@ -156,7 +161,7 @@ data:
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: "{{ .Release.Name }}-apoc-config"
+  name: "{{ include "neo4j.fullname" . }}-apoc-config"
   namespace: "{{ .Release.Namespace }}"
   labels:
     app: "{{ template "neo4j.appName" $ }}"

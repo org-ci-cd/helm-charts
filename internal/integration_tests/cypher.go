@@ -245,7 +245,6 @@ func checkNodeCount(t *testing.T, releaseName model.ReleaseName) error {
 // updateReadReplicaConfig updates the read replica upstream strategy on the provided chart
 func updateReadReplicaConfig(t *testing.T, releaseName model.ReleaseName, extraArgs ...string) error {
 
-	diskName := releaseName.DiskName()
 	err := run(
 		t,
 		"helm",
@@ -254,7 +253,6 @@ func updateReadReplicaConfig(t *testing.T, releaseName model.ReleaseName, extraA
 			releaseName,
 			model.ClusterReadReplicaHelmChart,
 			model.Neo4jEdition,
-			&diskName,
 			append(extraArgs, "--wait", "--timeout", "300s")...,
 		)...,
 	)
@@ -300,6 +298,39 @@ func checkNodeCountOnReadReplica(t *testing.T, releaseName model.ReleaseName, ex
 			return fmt.Errorf("count key is not received from read replica")
 		}
 	}
+}
+
+// checkLdapPassword runs a cypher query to get ldapPassword and checks if the ldapPassword is set or not
+func checkLdapPassword(t *testing.T, releaseName model.ReleaseName) error {
+	result, err := runQuery(t, releaseName, "CALL dbms.listConfig('dbms.security.ldap.authorization.system_password') YIELD value", noParams, model.Neo4jEdition == "community")
+	if err != nil {
+		return err
+	}
+
+	value, found := result[0].Get("value")
+	if !found {
+		return fmt.Errorf("expected at least one result")
+	}
+
+	ldapPass := value.(string)
+	assert.NotEqual(t, ldapPass, "No Value", "LdapPassword not set !!")
+	return nil
+}
+
+// checkBloomVersion runs the cypher query to get bloom license info
+func checkBloomVersion(t *testing.T, releaseName model.ReleaseName) error {
+	result, err := runQuery(t, releaseName, "CALL bloom.checkLicenseCompliance() YIELD status;", noParams, model.Neo4jEdition == "community")
+	if err != nil {
+		return err
+	}
+
+	value, found := result[0].Get("status")
+	if !found {
+		return fmt.Errorf("expected bloom license status, found nothing !!")
+	}
+	status := value.(string)
+	assert.Equal(t, status, "valid", fmt.Sprintf("bloom license status found %s is not matching with 'valid'", status))
+	return nil
 }
 
 func runQuery(t *testing.T, releaseName model.ReleaseName, cypher string, params map[string]interface{}, connectToPod bool) ([]*neo4j.Record, error) {

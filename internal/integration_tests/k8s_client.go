@@ -96,7 +96,7 @@ func CheckProbes(t *testing.T, releaseName model.ReleaseName) error {
 	return nil
 }
 
-func CheckServiceAnnotations(t *testing.T, releaseName model.ReleaseName, chart model.Neo4jHelmChart) (err error) {
+func CheckServiceAnnotations(t *testing.T, releaseName model.ReleaseName, chart model.Neo4jHelmChartBuilder) (err error) {
 	services, err := getAllServices(releaseName.Namespace())
 	if err != nil {
 		return err
@@ -109,9 +109,8 @@ func CheckServiceAnnotations(t *testing.T, releaseName model.ReleaseName, chart 
 	}
 
 	// when we add annotations via helm
-	diskName := releaseName.DiskName()
 	err = runAll(t, "helm", [][]string{
-		model.BaseHelmCommand("upgrade", releaseName, chart, model.Neo4jEdition, &diskName,
+		model.BaseHelmCommand("upgrade", releaseName, chart, model.Neo4jEdition,
 			"--set", "services.neo4j.annotations.foo=bar",
 			"--set", "services.admin.annotations.foo=bar",
 			"--set", "services.default.annotations.foo=bar",

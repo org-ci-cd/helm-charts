@@ -6,6 +6,8 @@ import (
 	"github.com/hashicorp/go-multierror"
 	. "github.com/neo4j/helm-charts/internal/helpers"
 	"github.com/neo4j/helm-charts/internal/resources"
+	"gopkg.in/yaml.v3"
+	"io"
 	"io/ioutil"
 	"k8s.io/utils/env"
 	"log"
@@ -16,6 +18,22 @@ import (
 	"strings"
 	"testing"
 )
+
+type HelmClient struct {
+	chartName string
+	chartPath string
+	extraArgs []string
+}
+
+func NewHelmClient(chartName string, extraArgs ...string) *HelmClient {
+	var _, sourceFile, _, _ = runtime.Caller(0)
+	var sourceDir = path.Dir(sourceFile)
+	return &HelmClient{
+		chartName: chartName,
+		chartPath: path.Join(path.Join(sourceDir, "../.."), chartName),
+		extraArgs: extraArgs,
+	}
+}
 
 func CheckError(err error) {
 	if err != nil {
@@ -60,14 +78,14 @@ func setWorkingDir() {
 var DefaultHelmTemplateReleaseName = releaseName("my-release")
 var Neo4jEdition = strings.ToLower(env.GetString("NEO4J_EDITION", "enterprise"))
 
-func HelmTemplateForRelease(t *testing.T, releaseName ReleaseName, chart HelmChart, helmTemplateArgs []string, moreHelmTemplateArgs ...string) (*K8sResources, error) {
+func HelmTemplateForRelease(t *testing.T, releaseName ReleaseName, chart HelmChartBuilder, helmTemplateArgs []string, moreHelmTemplateArgs ...string) (*K8sResources, error) {
 
 	helmTemplateArgs = append(minHelmCommand("template", releaseName, chart), helmTemplateArgs...)
 
 	return RunHelmCommand(t, helmTemplateArgs, moreHelmTemplateArgs...)
 }
 
-func HelmTemplate(t *testing.T, chart HelmChart, helmTemplateArgs []string, moreHelmTemplateArgs ...string) (*K8sResources, error) {
+func HelmTemplate(t *testing.T, chart HelmChartBuilder, helmTemplateArgs []string, moreHelmTemplateArgs ...string) (*K8sResources, error) {
 
 	return HelmTemplateForRelease(t, &DefaultHelmTemplateReleaseName, chart, helmTemplateArgs, moreHelmTemplateArgs...)
 }
@@ -94,17 +112,18 @@ func RunHelmCommand(t *testing.T, helmTemplateArgs []string, moreHelmTemplateArg
 	return decodeK8s(stdout)
 }
 
-func minHelmCommand(helmCommand string, releaseName ReleaseName, chart HelmChart) []string {
+func minHelmCommand(helmCommand string, releaseName ReleaseName, chart HelmChartBuilder) []string {
 	return []string{helmCommand, releaseName.String(), chart.getPath(), "--namespace", string(releaseName.Namespace())}
 }
 
-func BaseHelmCommand(helmCommand string, releaseName ReleaseName, chart Neo4jHelmChart, edition string, diskName *PersistentDiskName, extraHelmArguments ...string) []string {
+func BaseHelmCommand(helmCommand string, releaseName ReleaseName, chart Neo4jHelmChartBuilder, edition string, extraHelmArguments ...string) []string {
 
 	var helmArgs = minHelmCommand(helmCommand, releaseName, chart)
 	helmArgs = append(helmArgs,
 		"--set", "volumes.data.mode=volume",
-		"--set", "volumes.data.volume.gcePersistentDisk.pdName="+string(*diskName),
-		"--set", "neo4j.password="+DefaultPassword,
+		"--set", "volumes.data.volume.persistentVolumeClaim.claimName="+fmt.Sprintf("%s-pvc", releaseName.String()),
+		//"--set", "volumes.data.volume.gcePersistentDisk.pdName="+string(*diskName),
+		"--set", "neo4j.passwordFromSecret="+DefaultAuthSecretName,
 		"--set", "neo4j.resources.requests.cpu="+cpuRequests,
 		"--set", "neo4j.resources.requests.memory="+memoryRequests,
 		"--set", "neo4j.resources.limits.cpu="+cpuLimits,
@@ -137,7 +156,7 @@ func BaseHelmCommand(helmCommand string, releaseName ReleaseName, chart Neo4jHel
 	return helmArgs
 }
 
-func HelmTemplateFromYamlFile(t *testing.T, chart HelmChart, values resources.YamlFile, extraHelmArgs ...string) (*K8sResources, error) {
+func HelmTemplateFromYamlFile(t *testing.T, chart HelmChartBuilder, values resources.YamlFile, extraHelmArgs ...string) (*K8sResources, error) {
 	args := minHelmCommand("template", &DefaultHelmTemplateReleaseName, chart)
 	return RunHelmCommand(t, args, append(extraHelmArgs, values.HelmArgs()...)...)
 }
@@ -173,4 +192,72 @@ func HeadlessServiceHelmCommand(helmCommand string, releaseName ReleaseName, ext
 	}
 
 	return helmArgs
+}
+
+func HelmTemplateFromStruct(t *testing.T, chart HelmChartBuilder, values interface{}, extraArgs ...string) (*K8sResources, error) {
+	var helmValues []byte
+	var err error
+	if chart.Name() == "neo4j-admin" {
+		helmValues, err = yaml.Marshal(values.(Neo4jBackupValues))
+		log.Printf("%v", err)
+	} else {
+		helmValues, _ = yaml.Marshal(values.(HelmValues))
+	}
+	args := append(minHelmCommand("template", &DefaultHelmTemplateReleaseName, chart), "--values", "-")
+	if len(extraArgs) > 0 {
+		args = append(args, extraArgs...)
+	}
+	cmd := exec.Command("helm", args...)
+	stdin, err := cmd.StdinPipe()
+	if err != nil {
+		return nil, multierror.Append(errors.New("Error running helm template"), err)
+	}
+	go func() {
+		defer stdin.Close()
+		io.WriteString(stdin, string(helmValues))
+	}()
+
+	stdOut, stdErr, err := RunCommand(cmd)
+	t.Logf("Running %s\n", cmd.Args)
+	t.Logf("With StdIn:\n%s\n", helmValues)
+	if err != nil {
+		return nil, multierror.Append(errors.New("Error running helm template"), err, fmt.Errorf(string(stdErr)))
+	}
+	return decodeK8s(stdOut)
+}
+
+func (c *HelmClient) Install(t *testing.T, releaseName string, namespace string, values interface{}) (string, error) {
+	var helmValues []byte
+	if c.chartName == "neo4j-admin" {
+		helmValues, _ = yaml.Marshal(values.(Neo4jBackupValues))
+	} else {
+		helmValues, _ = yaml.Marshal(values.(HelmValues))
+	}
+	helmArgs := []string{
+		"install",
+		releaseName,
+		c.chartPath,
+		"--namespace",
+		namespace,
+		"--values",
+		"-",
+	}
+	helmArgs = append(helmArgs, c.extraArgs...)
+	cmd := exec.Command("helm", helmArgs...)
+	stdin, err := cmd.StdinPipe()
+	if err != nil {
+		return "", multierror.Append(errors.New("Error running helm template"), err)
+	}
+	go func() {
+		defer stdin.Close()
+		io.WriteString(stdin, string(helmValues))
+	}()
+
+	stdErrOut, err := cmd.CombinedOutput()
+	t.Logf("Running %s\n", cmd.Args)
+	t.Logf("With StdIn:\n%s\n", helmValues)
+	if err != nil {
+		return "", multierror.Append(errors.New("Error running helm install"), err, fmt.Errorf(string(stdErrOut)))
+	}
+	return string(stdErrOut), nil
 }

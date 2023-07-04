@@ -1,7 +1,7 @@
 # This dockerfile provides all the dependencies necessart to run go test on this project
 FROM gcr.io/google.com/cloudsdktool/cloud-sdk:slim
 
-ENV HELM_VERSION="v3.6.3" VERIFY_CHECKSUM="true" VERIFY_SIGNATURES="true" GO_VERSION="1.19" SHELL=bash
+ENV HELM_VERSION="v3.9.3" VERIFY_CHECKSUM="true" VERIFY_SIGNATURES="false" GO_VERSION="1.19" SHELL=bash
 COPY docker_resources/* /tmp/
 
 # use bash as the default shell (https://unix.stackexchange.com/questions/442510/how-to-use-bash-for-sh-in-ubuntu)
@@ -23,7 +23,7 @@ RUN apt-get update && apt-get install -y \
   && rm -rf /var/lib/apt/lists/* \
   && rm -rf /tmp/*
 
-#ENV USE_GKE_GCLOUD_AUTH_PLUGIN True
+ENV USE_GKE_GCLOUD_AUTH_PLUGIN True
 # Configure Go
 ENV GOPATH /root/go
 ENV PATH /root/go/bin:/root/.go/bin:$PATH

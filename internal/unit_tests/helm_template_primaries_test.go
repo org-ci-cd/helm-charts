@@ -28,8 +28,8 @@ var useEnterpriseAndAcceptLicense = append(useEnterprise, acceptLicenseAgreement
 // forEachPrimaryChart runs the given test on each helm chart that represents a Neo4j "Primary instance".
 // Primary instances are Standalone instances, the primary instance in a Primary+Read Replica(s) configuration and Neo4j Causal Cluster Cores.
 // n.b. forEachPrimaryChart runs the tests in parallel.
-func forEachPrimaryChart(t *testing.T, test func(*testing.T, model.Neo4jHelmChart)) {
-	doTestCase := func(t *testing.T, chart model.Neo4jHelmChart) {
+func forEachPrimaryChart(t *testing.T, test func(*testing.T, model.Neo4jHelmChartBuilder)) {
+	doTestCase := func(t *testing.T, chart model.Neo4jHelmChartBuilder) {
 		t.Parallel()
 		test(t, chart)
 	}
@@ -45,7 +45,7 @@ func forEachPrimaryChart(t *testing.T, test func(*testing.T, model.Neo4jHelmChar
 // Neo4j editions are "community" and "enterprise". Some helm charts support multiple editions (e.g. neo4j-standalone) and others only support one edition
 // (e.g. neo4j-cluster-core only supports Neo4j enterprise edition)
 // n.b. forEachSupportedEdition runs the tests in parallel.
-func forEachSupportedEdition(t *testing.T, chart model.Neo4jHelmChart, test func(*testing.T, model.Neo4jHelmChart, string)) {
+func forEachSupportedEdition(t *testing.T, chart model.Neo4jHelmChartBuilder, test func(*testing.T, model.Neo4jHelmChartBuilder, string)) {
 	doTestCase := func(t *testing.T, edition string) {
 		t.Parallel()
 		test(t, chart, edition)
@@ -58,9 +58,9 @@ func forEachSupportedEdition(t *testing.T, chart model.Neo4jHelmChart, test func
 	}
 }
 
-func andEachSupportedEdition(test func(*testing.T, model.Neo4jHelmChart, string)) func(t *testing.T, chart model.Neo4jHelmChart) {
-	return func(t *testing.T, chart model.Neo4jHelmChart) {
-		forEachSupportedEdition(t, chart, func(t *testing.T, chart model.Neo4jHelmChart, edition string) {
+func andEachSupportedEdition(test func(*testing.T, model.Neo4jHelmChartBuilder, string)) func(t *testing.T, chart model.Neo4jHelmChartBuilder) {
+	return func(t *testing.T, chart model.Neo4jHelmChartBuilder) {
+		forEachSupportedEdition(t, chart, func(t *testing.T, chart model.Neo4jHelmChartBuilder, edition string) {
 			test(t, chart, edition)
 		})
 	}
@@ -69,7 +69,7 @@ func andEachSupportedEdition(test func(*testing.T, model.Neo4jHelmChart, string)
 func TestErrorThrownIfNoDataVolumeModeChosen(t *testing.T) {
 	t.Parallel()
 	forEachPrimaryChart(t, andEachSupportedEdition(
-		func(t *testing.T, chart model.Neo4jHelmChart, edition string) {
+		func(t *testing.T, chart model.Neo4jHelmChartBuilder, edition string) {
 			var helmTemplateArgs []string
 			if edition == "enterprise" {
 				helmTemplateArgs = acceptLicenseAgreement
@@ -86,7 +86,7 @@ func TestErrorThrownIfNoVolumeSizeChosen(t *testing.T) {
 	t.Parallel()
 
 	forEachPrimaryChart(t, andEachSupportedEdition(
-		func(t *testing.T, chart model.Neo4jHelmChart, edition string) {
+		func(t *testing.T, chart model.Neo4jHelmChartBuilder, edition string) {
 			helmArgs := []string{}
 			helmArgs = append(helmArgs, requiredDataMode...)
 			if edition == "enterprise" {
@@ -126,7 +126,7 @@ func TestEnterpriseThrowsErrorIfLicenseAgreementNotAccepted(t *testing.T) {
 		append(useEnterprise, resources.AcceptLicenseAgreementBoolTrue.HelmArgs()...),
 	}
 
-	doTestCase := func(t *testing.T, chart model.Neo4jHelmChart, testCase []string) {
+	doTestCase := func(t *testing.T, chart model.Neo4jHelmChartBuilder, testCase []string) {
 		t.Parallel()
 		_, err := model.HelmTemplate(t, chart, testCase)
 		assert.Error(t, err)
@@ -134,7 +134,7 @@ func TestEnterpriseThrowsErrorIfLicenseAgreementNotAccepted(t *testing.T) {
 		assert.Contains(t, err.Error(), "Set neo4j.acceptLicenseAgreement: \"yes\" to confirm that you have a Neo4j license agreement.")
 	}
 
-	forEachPrimaryChart(t, func(t *testing.T, chart model.Neo4jHelmChart) {
+	forEachPrimaryChart(t, func(t *testing.T, chart model.Neo4jHelmChartBuilder) {
 		for i, testCase := range testCases {
 			t.Run(fmt.Sprintf("%d", i), func(t *testing.T) {
 				doTestCase(t, chart, testCase)
@@ -152,7 +152,7 @@ func TestEnterpriseDoesNotThrowErrorIfLicenseAgreementAccepted(t *testing.T) {
 		append(useEnterprise, resources.AcceptLicenseAgreement.HelmArgs()...),
 	}
 
-	doTestCase := func(t *testing.T, chart model.Neo4jHelmChart, testCase []string) {
+	doTestCase := func(t *testing.T, chart model.Neo4jHelmChartBuilder, testCase []string) {
 		t.Parallel()
 		manifest, err := model.HelmTemplate(t, chart, requiredDataMode, testCase...)
 		if !assert.NoError(t, err) {
@@ -162,7 +162,7 @@ func TestEnterpriseDoesNotThrowErrorIfLicenseAgreementAccepted(t *testing.T) {
 		checkNeo4jManifest(t, manifest)
 	}
 
-	forEachPrimaryChart(t, func(t *testing.T, chart model.Neo4jHelmChart) {
+	forEachPrimaryChart(t, func(t *testing.T, chart model.Neo4jHelmChartBuilder) {
 		for i, testCase := range testCases {
 			t.Run(fmt.Sprintf("%d", i), func(t *testing.T) {
 				doTestCase(t, chart, testCase)
@@ -196,7 +196,7 @@ func TestEnterpriseDoesNotThrowIfSet(t *testing.T) {
 		append(useEnterpriseAndAcceptLicense, resources.PluginsInitContainer.HelmArgs()...),
 	}
 
-	doTestCase := func(t *testing.T, chart model.Neo4jHelmChart, testCase []string) {
+	doTestCase := func(t *testing.T, chart model.Neo4jHelmChartBuilder, testCase []string) {
 		t.Parallel()
 		manifest, err := model.HelmTemplate(t, chart, requiredDataMode, testCase...)
 		if !assert.NoError(t, err) {
@@ -206,7 +206,7 @@ func TestEnterpriseDoesNotThrowIfSet(t *testing.T) {
 		checkNeo4jManifest(t, manifest)
 	}
 
-	forEachPrimaryChart(t, func(t *testing.T, chart model.Neo4jHelmChart) {
+	forEachPrimaryChart(t, func(t *testing.T, chart model.Neo4jHelmChartBuilder) {
 		for i, testCase := range testCases {
 			t.Run(fmt.Sprintf("%d", i), func(t *testing.T) {
 				doTestCase(t, chart, testCase)
@@ -220,7 +220,7 @@ func TestEnterpriseDoesNotThrowIfSet(t *testing.T) {
 func TestEnterpriseContainsDefaultBackupAddress(t *testing.T) {
 	t.Parallel()
 
-	forEachPrimaryChart(t, func(t *testing.T, chart model.Neo4jHelmChart) {
+	forEachPrimaryChart(t, func(t *testing.T, chart model.Neo4jHelmChartBuilder) {
 		manifest, err := model.HelmTemplate(t, chart, requiredDataMode, useEnterpriseAndAcceptLicense...)
 		if !assert.NoError(t, err) {
 			return
@@ -241,7 +241,7 @@ func TestEnterpriseContainsDefaultBackupAddress(t *testing.T) {
 func TestDefaultEnterpriseHelmTemplate(t *testing.T) {
 	t.Parallel()
 
-	forEachPrimaryChart(t, func(t *testing.T, chart model.Neo4jHelmChart) {
+	forEachPrimaryChart(t, func(t *testing.T, chart model.Neo4jHelmChartBuilder) {
 		manifest, err := model.HelmTemplate(t, chart, requiredDataMode, useEnterpriseAndAcceptLicense...)
 		if !assert.NoError(t, err) {
 			return
@@ -263,7 +263,7 @@ func TestAdditionalEnvVars(t *testing.T) {
 	t.Parallel()
 
 	forEachPrimaryChart(t, andEachSupportedEdition(
-		func(t *testing.T, chart model.Neo4jHelmChart, edition string) {
+		func(t *testing.T, chart model.Neo4jHelmChartBuilder, edition string) {
 			helmArgs := []string{}
 			helmArgs = append(helmArgs, requiredDataMode...)
 			if edition == "enterprise" {
@@ -286,7 +286,7 @@ func TestAdditionalEnvVars(t *testing.T) {
 func TestBoolsInConfig(t *testing.T) {
 	t.Parallel()
 
-	forEachPrimaryChart(t, andEachSupportedEdition(func(t *testing.T, chart model.Neo4jHelmChart, s string) {
+	forEachPrimaryChart(t, andEachSupportedEdition(func(t *testing.T, chart model.Neo4jHelmChartBuilder, s string) {
 		_, err := model.HelmTemplateFromYamlFile(t, chart, resources.BoolsInConfig, acceptLicenseAgreement...)
 		assert.Error(t, err, "Helm chart should fail if config contains boolean values")
 		assert.Contains(t, err.Error(), "config values must be strings.")
@@ -298,7 +298,7 @@ func TestBoolsInConfig(t *testing.T) {
 func TestIntsInConfig(t *testing.T) {
 	t.Parallel()
 
-	forEachPrimaryChart(t, andEachSupportedEdition(func(t *testing.T, chart model.Neo4jHelmChart, s string) {
+	forEachPrimaryChart(t, andEachSupportedEdition(func(t *testing.T, chart model.Neo4jHelmChartBuilder, s string) {
 		_, err := model.HelmTemplateFromYamlFile(t, chart, resources.IntsInConfig, acceptLicenseAgreement...)
 		assert.Error(t, err, "Helm chart should fail if config contains int values")
 		assert.Contains(t, err.Error(), "config values must be strings.")
@@ -311,7 +311,7 @@ func TestIntsInConfig(t *testing.T) {
 func TestChmodInitContainer(t *testing.T) {
 	t.Parallel()
 
-	forEachPrimaryChart(t, andEachSupportedEdition(func(t *testing.T, chart model.Neo4jHelmChart, s string) {
+	forEachPrimaryChart(t, andEachSupportedEdition(func(t *testing.T, chart model.Neo4jHelmChartBuilder, s string) {
 		manifest, err := model.HelmTemplateFromYamlFile(t, chart, resources.ChmodInitContainer, acceptLicenseAgreement...)
 		if !assert.NoError(t, err) {
 			return
@@ -340,7 +340,7 @@ func TestChmodInitContainer(t *testing.T) {
 func TestChmodInitContainers(t *testing.T) {
 	t.Parallel()
 
-	forEachPrimaryChart(t, andEachSupportedEdition(func(t *testing.T, chart model.Neo4jHelmChart, s string) {
+	forEachPrimaryChart(t, andEachSupportedEdition(func(t *testing.T, chart model.Neo4jHelmChartBuilder, s string) {
 		manifest, err := model.HelmTemplateFromYamlFile(t, chart, resources.ChmodInitContainerAndCustomInitContainer, acceptLicenseAgreement...)
 		if !assert.NoError(t, err) {
 			return
@@ -362,19 +362,6 @@ func TestChmodInitContainers(t *testing.T) {
 		assert.NotContains(t, container.Command[2], "chown -R \"7474\" \"/data\"")
 		assert.NotContains(t, container.Command[2], "chgrp -R \"7474\" \"/data\"")
 		assert.NotContains(t, container.Command[2], "chmod -R g+rwx \"/data\"")
-	}))
-}
-
-// Tests the "base" helm command used for Integration Tests
-func TestBaseHelmTemplate(t *testing.T) {
-	t.Parallel()
-
-	forEachPrimaryChart(t, andEachSupportedEdition(func(t *testing.T, chart model.Neo4jHelmChart, edition string) {
-		diskName := model.DefaultHelmTemplateReleaseName.DiskName()
-		_, err := model.RunHelmCommand(t, model.BaseHelmCommand("template", &model.DefaultHelmTemplateReleaseName, chart, edition, &diskName))
-		if !assert.NoError(t, err) {
-			return
-		}
 	}))
 }
 
@@ -429,11 +416,11 @@ func TestAuthSecrets(t *testing.T) {
 		{nil, true, nil, authSecretExpectation{authSecretCreated: true, randomPasswordAssigned: true}},
 		{&neo4jDotName, true, &emptyString, authSecretExpectation{authSecretCreated: true, randomPasswordAssigned: true}},
 		{nil, true, &emptyString, authSecretExpectation{authSecretCreated: true, randomPasswordAssigned: true}},
-		{&neo4jDotName, false, &model.DefaultPassword, authSecretExpectation{helmFailsWithError: errors.New("unsupported State: Cannot set neo4j.password when Neo4j authis disabled (dbms.security.auth_enabled=false). Either remove neo4j.password setting or enable Neo4j auth")}},
-		{nil, false, &model.DefaultPassword, authSecretExpectation{helmFailsWithError: errors.New("unsupported State: Cannot set neo4j.password when Neo4j authis disabled (dbms.security.auth_enabled=false). Either remove neo4j.password setting or enable Neo4j auth")}},
+		{&neo4jDotName, false, &model.DefaultPassword, authSecretExpectation{helmFailsWithError: errors.New("unsupported State: Cannot set neo4j.password or neo4j.passwordFromSecret when Neo4j authis disabled (dbms.security.auth_enabled=false). Either remove neo4j.password setting or enable Neo4j auth")}},
+		{nil, false, &model.DefaultPassword, authSecretExpectation{helmFailsWithError: errors.New("unsupported State: Cannot set neo4j.password or neo4j.passwordFromSecret when Neo4j authis disabled (dbms.security.auth_enabled=false). Either remove neo4j.password setting or enable Neo4j auth")}},
 	}
 
-	doTestCase := func(t *testing.T, chart model.Neo4jHelmChart, edition string, testCase authSecretTest) {
+	doTestCase := func(t *testing.T, chart model.Neo4jHelmChartBuilder, edition string, testCase authSecretTest) {
 		t.Parallel()
 		expectation := testCase.expectedResult
 
@@ -499,7 +486,7 @@ func TestAuthSecrets(t *testing.T) {
 		checkNeo4jManifest(t, manifest)
 	}
 
-	forEachPrimaryChart(t, andEachSupportedEdition(func(t *testing.T, chart model.Neo4jHelmChart, edition string) {
+	forEachPrimaryChart(t, andEachSupportedEdition(func(t *testing.T, chart model.Neo4jHelmChartBuilder, edition string) {
 		for i, testCase := range testCases {
 			t.Run(fmt.Sprintf("%d %s", i, testCase), func(t *testing.T) {
 				doTestCase(t, chart, edition, testCase)
@@ -508,10 +495,38 @@ func TestAuthSecrets(t *testing.T) {
 	}))
 }
 
+func TestPasswordFromExistingSecretWithLookupDisabled(t *testing.T) {
+	t.Parallel()
+
+	helmValues := model.DefaultCommunityValues
+	forEachPrimaryChart(t, andEachSupportedEdition(func(t *testing.T, chart model.Neo4jHelmChartBuilder, edition string) {
+		if edition == "enterprise" {
+			helmValues = model.DefaultEnterpriseValues
+		}
+		helmValues.Neo4J.PasswordFromSecret = "test-secret"
+		helmValues.DisableLookups = true
+
+		manifest, err := model.HelmTemplateFromStruct(t, chart, helmValues)
+		if !assert.NoError(t, err) {
+			return
+		}
+		statefulSet := manifest.OfTypeWithName(&appsv1.StatefulSet{}, model.DefaultHelmTemplateReleaseName.String())
+		if !assert.NotNil(t, statefulSet, fmt.Sprintf("no statefulset found with name %s", model.DefaultHelmTemplateReleaseName)) {
+			return
+		}
+		neo4jContainer := statefulSet.(*appsv1.StatefulSet).Spec.Template.Spec.Containers[0]
+		assert.Contains(t, neo4jContainer.EnvFrom, v1.EnvFromSource{
+			SecretRef: &v1.SecretEnvSource{
+				LocalObjectReference: v1.LocalObjectReference{Name: "test-secret"},
+			},
+		})
+	}))
+}
+
 func TestDefaultLabels(t *testing.T) {
 	t.Parallel()
 
-	forEachPrimaryChart(t, andEachSupportedEdition(func(t *testing.T, chart model.Neo4jHelmChart, edition string) {
+	forEachPrimaryChart(t, andEachSupportedEdition(func(t *testing.T, chart model.Neo4jHelmChartBuilder, edition string) {
 		neo4jName := strings.ToLower(t.Name())
 		expectedLabels := map[string]string{
 			"app": neo4jName,
@@ -545,7 +560,7 @@ func TestDefaultLabels(t *testing.T) {
 func TestNeo4jPodAnnotations(t *testing.T) {
 	t.Parallel()
 
-	forEachPrimaryChart(t, andEachSupportedEdition(func(t *testing.T, chart model.Neo4jHelmChart, edition string) {
+	forEachPrimaryChart(t, andEachSupportedEdition(func(t *testing.T, chart model.Neo4jHelmChartBuilder, edition string) {
 
 		manifest, err := model.HelmTemplate(t, chart, useDataModeAndAcceptLicense, resources.PodSpecAnnotations.HelmArgs()...)
 		if !assert.NoError(t, err) {
@@ -576,7 +591,7 @@ func TestNeo4jPodAnnotations(t *testing.T) {
 func TestNeo4jStatefulSetAnnotations(t *testing.T) {
 	t.Parallel()
 
-	forEachPrimaryChart(t, andEachSupportedEdition(func(t *testing.T, chart model.Neo4jHelmChart, edition string) {
+	forEachPrimaryChart(t, andEachSupportedEdition(func(t *testing.T, chart model.Neo4jHelmChartBuilder, edition string) {
 
 		manifest, err := model.HelmTemplate(t, chart, useDataModeAndAcceptLicense, resources.StatefulSetAnnotations.HelmArgs()...)
 		if !assert.NoError(t, err) {
@@ -608,7 +623,7 @@ func TestNeo4jStatefulSetAnnotations(t *testing.T) {
 func TestNeo4jPodPriorityClassName(t *testing.T) {
 	t.Parallel()
 
-	forEachPrimaryChart(t, andEachSupportedEdition(func(t *testing.T, chart model.Neo4jHelmChart, edition string) {
+	forEachPrimaryChart(t, andEachSupportedEdition(func(t *testing.T, chart model.Neo4jHelmChartBuilder, edition string) {
 
 		_, err := model.HelmTemplate(t, chart, useDataModeAndAcceptLicense, resources.PriorityClassName.HelmArgs()...)
 		if !assert.Error(t, err, "error should be thrown for priorityClass") {
@@ -622,11 +637,29 @@ func TestNeo4jPodPriorityClassName(t *testing.T) {
 	}))
 }
 
+// TestNeo4jPodPriorityClassNameWithLookupDisabled checks for Neo4j PriorityClassName with disableLookups flag set to true
+func TestNeo4jPodPriorityClassNameWithLookupDisabled(t *testing.T) {
+	t.Parallel()
+
+	helmValues := model.DefaultCommunityValues
+	forEachPrimaryChart(t, andEachSupportedEdition(func(t *testing.T, chart model.Neo4jHelmChartBuilder, edition string) {
+		if edition == "enterprise" {
+			helmValues = model.DefaultEnterpriseValues
+		}
+		helmValues.DisableLookups = true
+		helmValues.PodSpec.PriorityClassName = "demo"
+		_, err := model.HelmTemplateFromStruct(t, chart, helmValues, "--dry-run")
+		if !assert.NoError(t, err) {
+			return
+		}
+	}))
+}
+
 // TestNeo4jPodTolerations checks for tolerations in the statefulset
 func TestNeo4jPodTolerations(t *testing.T) {
 	t.Parallel()
 
-	forEachPrimaryChart(t, andEachSupportedEdition(func(t *testing.T, chart model.Neo4jHelmChart, edition string) {
+	forEachPrimaryChart(t, andEachSupportedEdition(func(t *testing.T, chart model.Neo4jHelmChartBuilder, edition string) {
 
 		manifest, err := model.HelmTemplate(t, chart, useDataModeAndAcceptLicense, resources.Tolerations.HelmArgs()...)
 		if !assert.NoError(t, err) {
@@ -656,7 +689,7 @@ func TestNeo4jPodTolerations(t *testing.T) {
 func TestNeo4jPodNodeAffinity(t *testing.T) {
 	t.Parallel()
 
-	forEachPrimaryChart(t, andEachSupportedEdition(func(t *testing.T, chart model.Neo4jHelmChart, edition string) {
+	forEachPrimaryChart(t, andEachSupportedEdition(func(t *testing.T, chart model.Neo4jHelmChartBuilder, edition string) {
 
 		manifest, err := model.HelmTemplate(t, chart, useDataModeAndAcceptLicense, resources.NodeAffinity.HelmArgs()...)
 		if !assert.NoError(t, err) {
@@ -679,7 +712,7 @@ func TestNeo4jPodNodeAffinity(t *testing.T) {
 func TestExtraLabels(t *testing.T) {
 	t.Parallel()
 
-	forEachPrimaryChart(t, andEachSupportedEdition(func(t *testing.T, chart model.Neo4jHelmChart, edition string) {
+	forEachPrimaryChart(t, andEachSupportedEdition(func(t *testing.T, chart model.Neo4jHelmChartBuilder, edition string) {
 		expectedValue := strconv.Itoa(helpers.RandomIntBetween(0, 1000))
 		manifest, err := model.HelmTemplate(t, chart, useDataModeAndAcceptLicense,
 			"--set-string", fmt.Sprintf("neo4j.labels.testlabel=%s", expectedValue))
@@ -700,21 +733,18 @@ func TestExtraLabels(t *testing.T) {
 func TestEmptyImageCredentials(t *testing.T) {
 	t.Parallel()
 
-	forEachPrimaryChart(t, andEachSupportedEdition(func(t *testing.T, chart model.Neo4jHelmChart, edition string) {
+	forEachPrimaryChart(t, andEachSupportedEdition(func(t *testing.T, chart model.Neo4jHelmChartBuilder, edition string) {
 		_, err := model.HelmTemplate(t, chart, useDataModeAndAcceptLicense, resources.EmptyImageCredentials.HelmArgs()...)
 		if !assert.Error(t, err) {
 			return
 		}
-		if !assert.Contains(t, err.Error(), "Username field cannot be empty") {
-			return
-		}
-		if !assert.Contains(t, err.Error(), "Password field cannot be empty") {
-			return
-		}
-		if !assert.Contains(t, err.Error(), "Email field cannot be empty") {
+		if !assert.Contains(t, err.Error(), "password field cannot be empty") {
 			return
 		}
 		if !assert.Contains(t, err.Error(), "name field cannot be empty") {
+			return
+		}
+		if !assert.Contains(t, err.Error(), "username field cannot be empty for imageCredential,email field cannot be empty for imageCredential") {
 			return
 		}
 	}))
@@ -723,7 +753,7 @@ func TestEmptyImageCredentials(t *testing.T) {
 func TestDuplicateImageCredentials(t *testing.T) {
 	t.Parallel()
 
-	forEachPrimaryChart(t, andEachSupportedEdition(func(t *testing.T, chart model.Neo4jHelmChart, edition string) {
+	forEachPrimaryChart(t, andEachSupportedEdition(func(t *testing.T, chart model.Neo4jHelmChartBuilder, edition string) {
 		_, err := model.HelmTemplate(t, chart, useDataModeAndAcceptLicense, resources.DuplicateImageCredentials.HelmArgs()...)
 		if !assert.Error(t, err) {
 			return
@@ -738,7 +768,7 @@ func TestDuplicateImageCredentials(t *testing.T) {
 func TestMissingApocConfigMap(t *testing.T) {
 	t.Parallel()
 
-	forEachPrimaryChart(t, andEachSupportedEdition(func(t *testing.T, chart model.Neo4jHelmChart, edition string) {
+	forEachPrimaryChart(t, andEachSupportedEdition(func(t *testing.T, chart model.Neo4jHelmChartBuilder, edition string) {
 		manifest, err := model.HelmTemplate(t, chart, useDataModeAndAcceptLicense)
 		if !assert.NoError(t, err) {
 			return
@@ -765,7 +795,7 @@ func TestMissingApocConfigMap(t *testing.T) {
 func TestApocConfigMapIsPresent(t *testing.T) {
 	t.Parallel()
 
-	forEachPrimaryChart(t, andEachSupportedEdition(func(t *testing.T, chart model.Neo4jHelmChart, edition string) {
+	forEachPrimaryChart(t, andEachSupportedEdition(func(t *testing.T, chart model.Neo4jHelmChartBuilder, edition string) {
 
 		manifest, err := model.HelmTemplate(t, chart, useDataModeAndAcceptLicense, resources.ApocConfig.HelmArgs()...)
 		if !assert.NoError(t, err) {
@@ -819,7 +849,7 @@ func TestApocConfigMapIsPresent(t *testing.T) {
 func TestMissingImageCredentials(t *testing.T) {
 	t.Parallel()
 
-	forEachPrimaryChart(t, andEachSupportedEdition(func(t *testing.T, chart model.Neo4jHelmChart, edition string) {
+	forEachPrimaryChart(t, andEachSupportedEdition(func(t *testing.T, chart model.Neo4jHelmChartBuilder, edition string) {
 		_, err := model.HelmTemplate(t, chart, useDataModeAndAcceptLicense, resources.MissingImageCredentials.HelmArgs()...)
 		if !assert.Error(t, err) {
 			return
@@ -834,7 +864,7 @@ func TestMissingImageCredentials(t *testing.T) {
 func TestEmptyImagePullSecrets(t *testing.T) {
 	t.Parallel()
 
-	forEachPrimaryChart(t, andEachSupportedEdition(func(t *testing.T, chart model.Neo4jHelmChart, edition string) {
+	forEachPrimaryChart(t, andEachSupportedEdition(func(t *testing.T, chart model.Neo4jHelmChartBuilder, edition string) {
 		manifest, err := model.HelmTemplate(t, chart, useDataModeAndAcceptLicense, resources.EmptyImagePullSecrets.HelmArgs()...)
 		if !assert.NoError(t, err) {
 			return
@@ -877,7 +907,7 @@ func TestEmptyImagePullSecrets(t *testing.T) {
 func TestInvalidNodeSelectorLabels(t *testing.T) {
 	t.Parallel()
 
-	forEachPrimaryChart(t, andEachSupportedEdition(func(t *testing.T, chart model.Neo4jHelmChart, edition string) {
+	forEachPrimaryChart(t, andEachSupportedEdition(func(t *testing.T, chart model.Neo4jHelmChartBuilder, edition string) {
 		_, err := model.HelmTemplate(t, chart, useDataModeAndAcceptLicense, resources.InvalidNodeSelectorLabels.HelmArgs()...)
 		if !assert.Error(t, err) {
 			return
@@ -889,11 +919,78 @@ func TestInvalidNodeSelectorLabels(t *testing.T) {
 	}))
 }
 
+// TestNodeSelectorLabelsWithLookupDisabledWithDryRun tests disableLookups flag when set to false along with --dry-run flag and nodeSelector labels
+func TestNodeSelectorLabelsWithLookupDisabledWithDryRun(t *testing.T) {
+	t.Parallel()
+	helmValues := model.DefaultCommunityValues
+	forEachPrimaryChart(t, andEachSupportedEdition(func(t *testing.T, chart model.Neo4jHelmChartBuilder, edition string) {
+		if edition == "enterprise" {
+			helmValues = model.DefaultEnterpriseValues
+		}
+		helmValues.DisableLookups = true
+		helmValues.NodeSelector = map[string]string{
+			"label1": "value1",
+		}
+		_, err := model.HelmTemplateFromStruct(t, chart, helmValues, "--dry-run")
+		if !assert.NoError(t, err) {
+			return
+		}
+	}))
+}
+
+// TestImagePullSecretWithLookupsDisabledWithDryRun tests disableLookups flag when set to true along with --dry-run flag and imagePullSecrets
+func TestImagePullSecretWithLookupsDisabledWithDryRun(t *testing.T) {
+	t.Parallel()
+	helmValues := model.DefaultCommunityValues
+	forEachPrimaryChart(t, andEachSupportedEdition(func(t *testing.T, chart model.Neo4jHelmChartBuilder, edition string) {
+		if edition == "enterprise" {
+			helmValues = model.DefaultEnterpriseValues
+		}
+		helmValues.DisableLookups = true
+		helmValues.Image.ImagePullSecrets = []string{"demo"}
+		_, err := model.HelmTemplateFromStruct(t, chart, helmValues, "--dry-run")
+		if !assert.NoError(t, err) {
+			return
+		}
+	}))
+}
+
+// TestContainerSecurityContext tests the presence of default containerSecurityContext in statefulSet
+func TestContainerSecurityContext(t *testing.T) {
+	t.Parallel()
+	helmValues := model.DefaultCommunityValues
+	forEachPrimaryChart(t, andEachSupportedEdition(func(t *testing.T, chart model.Neo4jHelmChartBuilder, edition string) {
+		if edition == "enterprise" {
+			helmValues = model.DefaultEnterpriseValues
+		}
+
+		manifest, err := model.HelmTemplateFromStruct(t, chart, helmValues)
+		if !assert.NoError(t, err) {
+			return
+		}
+
+		statefulSet := manifest.OfTypeWithName(&appsv1.StatefulSet{}, model.DefaultHelmTemplateReleaseName.String())
+		if !assert.NotNil(t, statefulSet, "statefulset found to be empty") {
+			return
+		}
+		containerSecurityContext := statefulSet.(*appsv1.StatefulSet).Spec.Template.Spec.Containers[0].SecurityContext
+		if !assert.Equal(t, *containerSecurityContext.RunAsNonRoot, true, fmt.Sprintf("runAsNonRoot current value %s does not match with %s", strconv.FormatBool(*containerSecurityContext.RunAsNonRoot), "true")) {
+			return
+		}
+		if !assert.Equal(t, *containerSecurityContext.RunAsUser, int64(7474), fmt.Sprintf("runAsUser current value %d does not match with %s", *containerSecurityContext.RunAsUser, "7474")) {
+			return
+		}
+		if !assert.Equal(t, *containerSecurityContext.RunAsGroup, int64(7474), fmt.Sprintf("runAsGroup current value %d does not match with %s", *containerSecurityContext.RunAsGroup, "7474")) {
+			return
+		}
+	}))
+}
+
 // TestAdditionalVolumesAndMounts checks if the additionalVolumes and additionalVolumeMounts are present or not
 func TestAdditionalVolumesAndMounts(t *testing.T) {
 	t.Parallel()
 
-	forEachPrimaryChart(t, andEachSupportedEdition(func(t *testing.T, chart model.Neo4jHelmChart, edition string) {
+	forEachPrimaryChart(t, andEachSupportedEdition(func(t *testing.T, chart model.Neo4jHelmChartBuilder, edition string) {
 		manifest, err := model.HelmTemplate(t, chart, useDataModeAndAcceptLicense, resources.AdditionalVolumesAndMounts.HelmArgs()...)
 		if !assert.NoError(t, err) {
 			return
@@ -938,10 +1035,118 @@ func TestAdditionalVolumesAndMounts(t *testing.T) {
 	}))
 }
 
+// TestNeo4jConfigWithEmptyLdapPasswordFromSecretAndMountPath checks that the user-config configmap does not contains ldapPassword config when empty ldapPasswordFromSecret and ldapPasswordMountPath are used
+func TestNeo4jConfigWithEmptyLdapPasswordFromSecretAndMountPath(t *testing.T) {
+	t.Parallel()
+	var helmValues model.HelmValues
+	forEachPrimaryChart(t, andEachSupportedEdition(func(t *testing.T, chart model.Neo4jHelmChartBuilder, edition string) {
+		helmValues = model.DefaultCommunityValues
+		if edition == "enterprise" {
+			helmValues = model.DefaultEnterpriseValues
+		}
+		helmValues.LdapPasswordFromSecret = "  "
+		helmValues.LdapPasswordMountPath = "  "
+		manifests, err := model.HelmTemplateFromStruct(t, chart, helmValues, "--dry-run")
+		if !assert.NoError(t, err) {
+			return
+		}
+		configMap := manifests.OfTypeWithName(&v1.ConfigMap{}, fmt.Sprintf("%s-user-config", model.DefaultHelmTemplateReleaseName.String()))
+		data := configMap.(*v1.ConfigMap).Data
+		assert.NotContains(t, data, "dbms.security.ldap.authorization.system_password", "Ldap Password Config should not be present")
+	}))
+}
+
+// TestNeo4jConfigWithEmptyLdapPasswordFromSecret checks for error when empty ldapPasswordFromSecret is provided along with a mount path
+func TestNeo4jConfigWithEmptyLdapPasswordFromSecret(t *testing.T) {
+	t.Parallel()
+	var helmValues model.HelmValues
+	forEachPrimaryChart(t, andEachSupportedEdition(func(t *testing.T, chart model.Neo4jHelmChartBuilder, edition string) {
+		helmValues = model.DefaultCommunityValues
+		if edition == "enterprise" {
+			helmValues = model.DefaultEnterpriseValues
+		}
+		helmValues.LdapPasswordFromSecret = "  "
+		helmValues.LdapPasswordMountPath = "/config/ldapPassword"
+		_, err := model.HelmTemplateFromStruct(t, chart, helmValues, "--dry-run")
+		if edition == "enterprise" {
+			assert.Error(t, err, "error should be seen when passing empty ldapPasswordFromSecret along with valid mount path")
+			assert.Contains(t, err.Error(), "Please define 'ldapPasswordFromSecret'")
+		} else {
+			assert.Error(t, err, "error should be seen when using ldapPasswordMount with community edition")
+			assert.Contains(t, err.Error(), "ldapPasswordFromSecret and ldapPasswordMountPath are Enterprise Edition feature only")
+		}
+
+	}))
+}
+
+// TestNeo4jConfigWithEmptyLdapPasswordMountPath checks for error when empty ldapPasswordMountPath is provided along with a valid ldapPasswordFromSecret
+func TestNeo4jConfigWithEmptyLdapPasswordMountPath(t *testing.T) {
+	t.Parallel()
+	var helmValues model.HelmValues
+	forEachPrimaryChart(t, andEachSupportedEdition(func(t *testing.T, chart model.Neo4jHelmChartBuilder, edition string) {
+		helmValues = model.DefaultCommunityValues
+		if edition == "enterprise" {
+			helmValues = model.DefaultEnterpriseValues
+		}
+		helmValues.LdapPasswordFromSecret = "ldapsecret"
+		helmValues.LdapPasswordMountPath = "  "
+		_, err := model.HelmTemplateFromStruct(t, chart, helmValues, "--dry-run")
+		if edition == "enterprise" {
+			assert.Error(t, err, "error should be seen when passing empty ldapPasswordMountPath along with valid ldap secret")
+			assert.Contains(t, err.Error(), "Please define 'ldapPasswordMountPath'")
+		} else {
+			assert.Error(t, err, "error should be seen when using ldapPasswordFromSecret with community edition")
+			assert.Contains(t, err.Error(), "ldapPasswordFromSecret and ldapPasswordMountPath are Enterprise Edition feature only")
+		}
+	}))
+}
+
+// TestLdapVolumeAndVolumeMountsExistsOrNot checks for ldap volume and volume-mount when ldapPasswordFromSecret and ldapPasswordMountPath are provided
+func TestLdapVolumeAndVolumeMountsExistsOrNot(t *testing.T) {
+	t.Parallel()
+	var helmValues model.HelmValues
+	forEachPrimaryChart(t, andEachSupportedEdition(func(t *testing.T, chart model.Neo4jHelmChartBuilder, edition string) {
+		helmValues = model.DefaultCommunityValues
+		if edition == "enterprise" {
+			helmValues = model.DefaultEnterpriseValues
+		}
+		helmValues.LdapPasswordFromSecret = "ldapsecret"
+		helmValues.LdapPasswordMountPath = "/config/ldapPassword"
+		helmValues.DisableLookups = true
+		manifests, err := model.HelmTemplateFromStruct(t, chart, helmValues, "--dry-run")
+		if edition == "enterprise" {
+			assert.NoError(t, err, "no error should be seen while checking for ldap volume and volumeMount")
+			statefulSet := manifests.OfTypeWithName(&appsv1.StatefulSet{}, model.DefaultHelmTemplateReleaseName.String())
+			if !assert.NotNil(t, statefulSet, fmt.Sprintf("no statefulset found with name %s", model.DefaultHelmTemplateReleaseName)) {
+				return
+			}
+
+			volumes := statefulSet.(*appsv1.StatefulSet).Spec.Template.Spec.Volumes
+			assert.NotEqual(t, len(volumes), 0, "no volumes found")
+			var names []string
+			for _, volume := range volumes {
+				names = append(names, volume.Name)
+			}
+			assert.Contains(t, names, "neo4j-ldap-password", "missing neo4j-ldap-password volume")
+
+			volumeMounts := statefulSet.(*appsv1.StatefulSet).Spec.Template.Spec.Containers[0].VolumeMounts
+			assert.NotEqual(t, len(volumeMounts), 0, "no volume mounts found")
+			names = []string{}
+			for _, volumeMount := range volumeMounts {
+				names = append(names, volumeMount.Name)
+			}
+			assert.Contains(t, names, "neo4j-ldap-password", "missing neo4j-ldap-password volume mount")
+		} else {
+			assert.Error(t, err, "error should be seen when using ldapPasswordFromSecret with community edition")
+			assert.Contains(t, err.Error(), "ldapPasswordFromSecret and ldapPasswordMountPath are Enterprise Edition feature only")
+		}
+	}))
+}
+
 func TestErrorIsThrownForInvalidMemoryResources(t *testing.T) {
 
 	t.Parallel()
-	doTestCase := func(t *testing.T, chart model.Neo4jHelmChart, edition string) {
+	doTestCase := func(t *testing.T, chart model.Neo4jHelmChartBuilder, edition string) {
 		//valid syntax but less than the minimum 2G or 2Gi
 		invalidMemory := []string{
 			"2M",
@@ -959,7 +1164,7 @@ func TestErrorIsThrownForInvalidMemoryResources(t *testing.T) {
 func TestErrorIsThrownForInvalidMemoryResourcesRegex(t *testing.T) {
 
 	t.Parallel()
-	doTestCase := func(t *testing.T, chart model.Neo4jHelmChart, edition string) {
+	doTestCase := func(t *testing.T, chart model.Neo4jHelmChartBuilder, edition string) {
 		invalidMemoryRegexs := []string{
 			"P1233",
 			"2.G",
@@ -985,7 +1190,7 @@ func TestErrorIsThrownForInvalidMemoryResourcesRegex(t *testing.T) {
 func TestErrorIsThrownForEmptyMemoryResources(t *testing.T) {
 
 	t.Parallel()
-	doTestCase := func(t *testing.T, chart model.Neo4jHelmChart, edition string) {
+	doTestCase := func(t *testing.T, chart model.Neo4jHelmChartBuilder, edition string) {
 		invalidMemory := []string{
 			"",
 		}
@@ -997,7 +1202,7 @@ func TestErrorIsThrownForEmptyMemoryResources(t *testing.T) {
 func TestErrorIsThrownForEmptyCPUResources(t *testing.T) {
 
 	t.Parallel()
-	doTestCase := func(t *testing.T, chart model.Neo4jHelmChart, edition string) {
+	doTestCase := func(t *testing.T, chart model.Neo4jHelmChartBuilder, edition string) {
 		invalidCPU := []string{
 			"",
 		}
@@ -1009,7 +1214,7 @@ func TestErrorIsThrownForEmptyCPUResources(t *testing.T) {
 func TestErrorIsThrownForInvalidCPUResourcesRegex(t *testing.T) {
 
 	t.Parallel()
-	doTestCase := func(t *testing.T, chart model.Neo4jHelmChart, edition string) {
+	doTestCase := func(t *testing.T, chart model.Neo4jHelmChartBuilder, edition string) {
 		invalidCPURegexs := []string{
 			"123m123m123",
 			"123m3222",
@@ -1033,7 +1238,7 @@ func TestErrorIsThrownForInvalidCPUResourcesRegex(t *testing.T) {
 func TestErrorIsThrownForInvalidCPUResources(t *testing.T) {
 
 	t.Parallel()
-	doTestCase := func(t *testing.T, chart model.Neo4jHelmChart, edition string) {
+	doTestCase := func(t *testing.T, chart model.Neo4jHelmChartBuilder, edition string) {
 		//valid syntax but less than the minimum 2G or 2Gi
 		invalidCPU := []string{
 			"1.5m",
@@ -1061,7 +1266,7 @@ func TestNeo4jResourcesAndLimits(t *testing.T) {
 		GenerateNeo4jResourcesTestCase([]string{"cpuResources", "memoryRequests"}, "0.5", "3Gi"),
 	}
 
-	forEachPrimaryChart(t, andEachSupportedEdition(func(t *testing.T, chart model.Neo4jHelmChart, edition string) {
+	forEachPrimaryChart(t, andEachSupportedEdition(func(t *testing.T, chart model.Neo4jHelmChartBuilder, edition string) {
 		for i, testCase := range testCases {
 			t.Run(fmt.Sprintf("%d %s", i, testCase), func(t *testing.T) {
 				checkResourcesAndLimits(t, chart, edition, testCase)
@@ -1070,8 +1275,37 @@ func TestNeo4jResourcesAndLimits(t *testing.T) {
 	}))
 }
 
+// TestDisableSubPathExprFlag tests disableSubPathExpr flag when set to true along with --dry-run flag
+func TestDisableSubPathExprFlag(t *testing.T) {
+	t.Parallel()
+	helmValues := model.DefaultCommunityValues
+	forEachPrimaryChart(t, andEachSupportedEdition(func(t *testing.T, chart model.Neo4jHelmChartBuilder, edition string) {
+		if edition == "enterprise" {
+			helmValues = model.DefaultEnterpriseValues
+		}
+		helmValues.Volumes.Licenses.DisableSubPath = true
+
+		manifests, err := model.HelmTemplateFromStruct(t, chart, helmValues, "--dry-run")
+		assert.NoError(t, err, fmt.Sprintf("error while testing disableSubPathExpr \n%v", err))
+
+		neo4jStatefulSet := manifests.First(&appsv1.StatefulSet{}).(*appsv1.StatefulSet)
+		assert.NotNil(t, neo4jStatefulSet, "missing statefulSet object")
+
+		volumeMounts := neo4jStatefulSet.Spec.Template.Spec.Containers[0].VolumeMounts
+		assert.NotEqual(t, len(volumeMounts), 0, "no volume mounts present")
+
+		//ensure that /licenses mount does not have any subPathExpr set
+		for _, volumeMount := range volumeMounts {
+			if volumeMount.MountPath == "/licenses" {
+				assert.Equal(t, volumeMount.SubPathExpr, "", "subPathExpr is not empty")
+				break
+			}
+		}
+	}))
+}
+
 // checkMemoryResources runs helm template on all charts of all editions with invalid memory values
-func checkMemoryResources(t *testing.T, chart model.Neo4jHelmChart, edition string, memorySlice []string, containsErrMsg string) {
+func checkMemoryResources(t *testing.T, chart model.Neo4jHelmChartBuilder, edition string, memorySlice []string, containsErrMsg string) {
 
 	var args []string
 	setEdition := []string{"--set", fmt.Sprintf("neo4j.edition=%s", edition)}
@@ -1090,7 +1324,7 @@ func checkMemoryResources(t *testing.T, chart model.Neo4jHelmChart, edition stri
 }
 
 // checkCPUResources runs helm template on all charts of all editions with invalid cpu values
-func checkCPUResources(t *testing.T, chart model.Neo4jHelmChart, edition string, cpuSlice []string, containsErrMsg string) {
+func checkCPUResources(t *testing.T, chart model.Neo4jHelmChartBuilder, edition string, cpuSlice []string, containsErrMsg string) {
 
 	var args []string
 	setEdition := []string{"--set", fmt.Sprintf("neo4j.edition=%s", edition)}
@@ -1109,7 +1343,7 @@ func checkCPUResources(t *testing.T, chart model.Neo4jHelmChart, edition string,
 }
 
 // checkCPUResources runs helm template on all charts of all editions with invalid cpu values
-func checkResourcesAndLimits(t *testing.T, chart model.Neo4jHelmChart, edition string, testCase Neo4jResourceTestCase) {
+func checkResourcesAndLimits(t *testing.T, chart model.Neo4jHelmChartBuilder, edition string, testCase Neo4jResourceTestCase) {
 
 	var args []string
 	setEdition := []string{"--set", fmt.Sprintf("neo4j.edition=%s", edition)}
